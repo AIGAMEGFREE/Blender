@@ -1,4 +1,6 @@
-<html lang="ru"><head>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
 <meta charset="UTF-8">
 <title>Blender Web</title>
 <style>
@@ -209,8 +211,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div class="mode" id="modeText">OBJECT MODE</div>
       <div id="selText" style="color:#aaa;">Nothing selected</div>
     </div>
-    <div class="vp-info" id="info-bl">LMB Select · Shift+LMB Add · RMB/LMB-empty Rotate · Wheel Zoom · Drag&amp;Drop Files</div>
-    <div class="vp-info" id="info-br">1016x644</div>
+    <div class="vp-info" id="info-bl">LMB Select · Shift+LMB Add · RMB/LMB-empty Rotate · Wheel Zoom · Drag&Drop Files</div>
+    <div class="vp-info" id="info-br">—</div>
     <div id="tools">
       <button class="tool active" data-tool="select" title="Select (W)">↖</button>
       <button class="tool" data-tool="move" title="Move (G)">✥</button>
@@ -223,29 +225,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <button class="tool" data-tool="key" title="Keyframe (I)">◆</button>
       <button class="tool" data-tool="focus" title="Focus (.)">⊙</button>
     </div>
-    <svg id="nav-gizmo" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.05)"></circle><g class="axis-handle" data-axis="z" style="cursor:pointer">
-      <line x1="50" y1="50" x2="28.44482273482464" y2="57.86635991995819" stroke="#4b7bd9" stroke-width="2" opacity="0.4"></line>
-      <circle cx="28.44482273482464" cy="57.86635991995819" r="7" fill="#4b7bd9" opacity="0.4"></circle>
-      <text x="28.44482273482464" y="61.86635991995819" fill="#fff" font-size="9" text-anchor="middle" font-weight="700" pointer-events="none">Z</text>
-    </g><g class="axis-handle" data-axis="y" style="cursor:pointer">
-      <line x1="50" y1="50" x2="50" y2="28.134463282178736" stroke="#6ab04c" stroke-width="2" opacity="0.4"></line>
-      <circle cx="50" cy="28.134463282178736" r="7" fill="#6ab04c" opacity="0.4"></circle>
-      <text x="50" y="32.134463282178736" fill="#fff" font-size="9" text-anchor="middle" font-weight="700" pointer-events="none">Y</text>
-    </g><g class="axis-handle" data-axis="x" style="cursor:pointer">
-      <line x1="50" y1="50" x2="64.5387184121183" y2="61.662704902863894" stroke="#e5484d" stroke-width="2" opacity="0.4"></line>
-      <circle cx="64.5387184121183" cy="61.662704902863894" r="7" fill="#e5484d" opacity="0.4"></circle>
-      <text x="64.5387184121183" y="65.6627049028639" fill="#fff" font-size="9" text-anchor="middle" font-weight="700" pointer-events="none">X</text>
-    </g><circle cx="50" cy="50" r="6" fill="#555" stroke="#888" class="center-btn" style="cursor:pointer"></circle></svg>
+    <svg id="nav-gizmo" viewBox="0 0 100 100"></svg>
     <div id="sel-box"></div>
-  <canvas data-engine="three.js r160" width="1016" height="644" style="display: block; touch-action: none; width: 1016px; height: 644px;"></canvas></div>
+  </div>
 
   <div id="right">
-    <div class="panel-head" id="outlinerHead">Outliner <span id="objCountBadge" style="color:var(--text)">1</span></div>
-    <div id="outliner"><div class="out-row" data-id="161">
-      <span class="ic">▢</span>
-      <span class="nm">Cube.001</span>
-      <span class="eye" data-eye="">👁</span>
-    </div></div>
+    <div class="panel-head" id="outlinerHead">Outliner <span id="objCountBadge" style="color:var(--text)">0</span></div>
+    <div id="outliner"></div>
     <div class="tab-bar">
       <div class="tab active" data-tab="object">⚙</div>
       <div class="tab" data-tab="transform">↔</div>
@@ -258,9 +244,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
         <div class="grp"><div class="grp-h">Object</div><div class="grp-b">
           <div class="row" style="grid-template-columns:1fr;"><div class="fields"><div class="ifield" style="flex:1;"><input type="text" id="pName" placeholder="—"></div></div></div>
           <div class="row"><span class="lbl">Type</span><span id="pType" style="color:var(--dim);font-size:11px;">—</span></div>
-          <label class="check-row"><input type="checkbox" id="pVisible" checked=""> Visible</label>
-          <label class="check-row"><input type="checkbox" id="pCastShadow" checked=""> Cast shadow</label>
-          <label class="check-row"><input type="checkbox" id="pReceiveShadow" checked=""> Receive shadow</label>
+          <label class="check-row"><input type="checkbox" id="pVisible" checked> Visible</label>
+          <label class="check-row"><input type="checkbox" id="pCastShadow" checked> Cast shadow</label>
+          <label class="check-row"><input type="checkbox" id="pReceiveShadow" checked> Receive shadow</label>
         </div></div>
         <div class="grp"><div class="grp-h">Actions</div><div class="grp-b">
           <div class="btn-row">
@@ -297,7 +283,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
           <div class="row"><span class="lbl">Metallic</span><div class="fields"><input type="range" id="pMetal" min="0" max="1" step="0.01" value="0.1"><span class="val" id="pMetalV">0.10</span></div></div>
           <div class="row"><span class="lbl">Roughness</span><div class="fields"><input type="range" id="pRough" min="0" max="1" step="0.01" value="0.55"><span class="val" id="pRoughV">0.55</span></div></div>
           <div class="row"><span class="lbl">Opacity</span><div class="fields"><input type="range" id="pOpacity" min="0" max="1" step="0.01" value="1"><span class="val" id="pOpacityV">1.00</span></div></div>
-          <div class="row"><span class="lbl">Emissive</span><div class="fields"><input type="range" id="pEmissive" min="0" max="1" step="0.01" value="0"><span class="val" id="pEmissiveV">1.00</span></div></div>
+          <div class="row"><span class="lbl">Emissive</span><div class="fields"><input type="range" id="pEmissive" min="0" max="1" step="0.01" value="0"><span class="val" id="pEmissiveV">0.00</span></div></div>
           <div class="row"><span class="lbl">Em. Color</span><div class="fields"><div class="ifield" style="flex:1;"><input type="color" id="pEmColor" value="#000000"></div></div></div>
           <label class="check-row"><input type="checkbox" id="pWireframe"> Wireframe</label>
           <label class="check-row"><input type="checkbox" id="pFlat"> Flat Shading</label>
@@ -388,18 +374,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div class="tl-field">Frame: <span id="curFrame">1</span></div>
     </div>
     <div id="anim-track">
-      <div id="anim-ruler"><div class="tick" style="left: 150px;">1</div><div class="tick" style="left: 222.773px;">11</div><div class="tick" style="left: 295.546px;">21</div><div class="tick" style="left: 368.319px;">31</div><div class="tick" style="left: 441.092px;">41</div><div class="tick" style="left: 513.866px;">51</div><div class="tick" style="left: 586.639px;">61</div><div class="tick" style="left: 659.412px;">71</div><div class="tick" style="left: 732.185px;">81</div><div class="tick" style="left: 804.958px;">91</div><div class="tick" style="left: 877.731px;">101</div><div class="tick" style="left: 950.504px;">111</div></div>
-      <div id="anim-keys"><div class="key-row"><div class="key-lbl">▹ Cube.001</div><div class="key-content"></div></div></div>
+      <div id="anim-ruler"></div>
+      <div id="anim-keys"></div>
       <div id="playhead" style="left:150px;"></div>
     </div>
   </div>
 
   <div id="status">
-    <div class="s">Selected: <b id="stSel">0/1</b><span id="stSelName" style="color:var(--ac);margin-left:4px;"></span></div>
-    <div class="s">Objects: <b id="stObj">1</b></div>
+    <div class="s">Selected: <b id="stSel">0</b><span id="stSelName" style="color:var(--ac);margin-left:4px;"></span></div>
+    <div class="s">Objects: <b id="stObj">0</b></div>
     <div class="s">Frame: <b id="stFrame">1</b></div>
     <div class="s">Keys: <b id="stKeys">0</b></div>
-    <div class="s">FPS: <b id="stFps">26</b></div>
+    <div class="s">FPS: <b id="stFps">60</b></div>
     <div class="spacer"></div>
     <div><kbd>W</kbd><kbd>G</kbd><kbd>R</kbd><kbd>S</kbd> · <kbd>I</kbd> key · <kbd>Space</kbd> play · <kbd>Shift+клик</kbd> multi-select</div>
   </div>
@@ -407,7 +393,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 
 <div class="modal" id="addModal">
   <div class="modal-box">
-    <h3><span>Add Object</span> <button data-close="">×</button></h3>
+    <h3><span>Add Object</span> <button data-close>×</button></h3>
     <div class="agrid">
       <div class="aitem" data-add="cube"><span class="ic">▢</span>Cube</div>
       <div class="aitem" data-add="sphere"><span class="ic">●</span>Sphere</div>
@@ -427,7 +413,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 
 <div class="modal" id="keyModal">
   <div class="modal-box">
-    <h3><span>Insert Keyframe</span> <button data-close="">×</button></h3>
+    <h3><span>Insert Keyframe</span> <button data-close>×</button></h3>
     <div class="agrid" style="grid-template-columns:1fr 1fr;">
       <div class="aitem" data-key="position"><span class="ic">↔</span>Location</div>
       <div class="aitem" data-key="rotation"><span class="ic">↻</span>Rotation</div>
@@ -2192,4 +2178,5 @@ console.log('%cТекстуры: Presets в Material tab','color:#6ab04c');
 console.log('%cСвет: Add → Point/Spot Light','color:#6ab04c');
 console.log('%cUndo/Redo: Ctrl+Z / Ctrl+Y · Save: Ctrl+S · Render: F12','color:#6ab04c');
 </script>
-</body></html>
+</body>
+</html>
