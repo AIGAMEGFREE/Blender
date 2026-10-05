@@ -5,7 +5,7 @@
 <title>Blender Web</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg0:#1a1a1a;--bg1:#222;--bg2:#2b2b2b;--bg3:#333;--bg4:#3a3a3a;--hov:#454545;--bd:#111;--bd2:#333;--ac:#e87d0d;--ac2:#ff9428;--text:#ccc;--dim:#888;--green:#6ab04c;--red:#d94b4b;--key:#e8a10d;--ax:#e5484d;--ay:#6ab04c;--az:#4b7bd9}
+:root{--bg0:#1a1a1a;--bg1:#222;--bg2:#2b2b2b;--bg3:#333;--bg4:#3a3a3a;--hov:#454545;--bd:#111;--bd2:#333;--ac:#e87d0d;--text:#ccc;--dim:#888;--green:#6ab04c;--red:#d94b4b;--key:#e8a10d;--ax:#e5484d;--ay:#6ab04c;--az:#4b7bd9}
 html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Tahoma,sans-serif;font-size:12px;background:var(--bg0);color:var(--text);user-select:none;-webkit-font-smoothing:antialiased}
 button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer;border:none;background:none}
 input,select{font-family:inherit}
@@ -16,7 +16,6 @@ input,select{font-family:inherit}
 #title{grid-area:title;background:var(--bg1);display:flex;align-items:center;padding:0 10px;border-bottom:1px solid var(--bd);font-size:11px;color:var(--dim)}
 #title .logo{color:var(--ac);font-weight:700;margin-right:8px}
 #title .fname{color:var(--text)}
-#title .fname.dirty::after{content:' *';color:var(--ac)}
 #title .spacer{flex:1}
 #menu{grid-area:menu;background:var(--bg2);display:flex;align-items:center;padding:0 6px;border-bottom:1px solid var(--bd);z-index:100}
 .menu-btn{padding:0 12px;height:30px;display:flex;align-items:center;cursor:pointer;position:relative;border-radius:3px}
@@ -31,7 +30,7 @@ input,select{font-family:inherit}
 #menu .spacer{flex:1}
 #view{grid-area:view;position:relative;background:#3a3a3a;overflow:hidden;border-right:1px solid var(--bd)}
 #view canvas{display:block}
-#view.dragover::after{content:'Отпусти — модель загрузится';position:absolute;inset:20px;border:3px dashed var(--ac);border-radius:12px;background:rgba(232,125,13,.15);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;font-weight:600;z-index:999;pointer-events:none;text-shadow:0 2px 8px #000}
+#view.dragover::after{content:'Отпусти — файл загрузится';position:absolute;inset:20px;border:3px dashed var(--ac);border-radius:12px;background:rgba(232,125,13,.15);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;font-weight:600;z-index:999;pointer-events:none;text-shadow:0 2px 8px #000}
 .vp-info{position:absolute;pointer-events:none;font-size:11px;color:#ddd;text-shadow:0 1px 2px rgba(0,0,0,.7);z-index:5}
 #info-tl{top:10px;left:10px;line-height:1.6}
 #info-tl .mode{color:var(--ac);font-weight:bold}
@@ -84,6 +83,12 @@ input,select{font-family:inherit}
 input[type=range]{flex:1;-webkit-appearance:none;background:var(--bg1);border-radius:2px;height:4px;outline:none}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--ac);border-radius:50%;cursor:pointer}
 .val{width:38px;text-align:right;font-size:10px;color:var(--dim);font-family:monospace}
+.btn-row{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.btn-sm{padding:4px 10px;background:var(--bg1);border:1px solid var(--bd2);border-radius:3px;font-size:11px}
+.btn-sm:hover{background:var(--hov)}
+.btn-sm.primary{background:var(--ac);color:#fff;border-color:var(--ac)}
+.btn-sm.danger{background:#5c1a1a;color:#ff9999;border-color:#8a3a3a}
+#tex-preview{width:80px;height:80px;background:#111;border:1px solid var(--bd2);border-radius:4px;background-size:cover;background-position:center;margin-top:4px}
 #anim{grid-area:anim;background:var(--bg2);border-top:1px solid var(--bd);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
 #anim-controls{display:flex;align-items:center;gap:4px;padding:5px 8px;background:var(--bg3);border-bottom:1px solid var(--bd);font-size:11px;flex-wrap:wrap}
 .tl-btn{background:var(--bg1);border:1px solid var(--bd2);color:var(--text);min-width:30px;height:24px;padding:0 8px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .1s}
@@ -107,7 +112,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .key-lbl.prop{padding-left:26px;color:#666;background:#262626;font-size:9px}
 .key-content{flex:1;position:relative;height:100%;min-width:0}
 .key-diamond{position:absolute;top:50%;width:11px;height:11px;background:var(--key);border:1px solid #000;transform:translate(-50%,-50%) rotate(45deg);cursor:pointer;z-index:1}
-.key-diamond:hover{background:var(--ac2);transform:translate(-50%,-50%) rotate(45deg) scale(1.35);z-index:5}
+.key-diamond:hover{background:#ffb347;transform:translate(-50%,-50%) rotate(45deg) scale(1.35);z-index:5}
 .key-diamond.selected{background:#fff;box-shadow:0 0 8px var(--ac)}
 #playhead{position:absolute;top:0;bottom:0;width:1px;background:var(--ac);pointer-events:none;z-index:6;box-shadow:0 0 6px var(--ac)}
 #playhead::before{content:'';position:absolute;top:0;left:-6px;width:13px;height:12px;background:var(--ac);clip-path:polygon(0 0,100% 0,50% 100%)}
@@ -129,13 +134,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 #toast{position:fixed;bottom:34px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(20,20,20,.96);border:1px solid var(--bd2);border-left:3px solid var(--green);color:#fff;padding:9px 18px;border-radius:5px;font-size:12px;opacity:0;pointer-events:none;transition:all .25s;z-index:99999}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.error{border-left-color:var(--red)}
+#toast.warn{border-left-color:var(--ac)}
 .check-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;cursor:pointer}
 .check-row input{accent-color:var(--ac);cursor:pointer}
-.btn-row{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
-.btn-sm{padding:4px 10px;background:var(--bg1);border:1px solid var(--bd2);border-radius:3px;font-size:11px}
-.btn-sm:hover{background:var(--hov)}
-.btn-sm.primary{background:var(--ac);color:#fff}
-.btn-sm.danger{background:#5c1a1a;color:#ff9999;border-color:#8a3a3a}
 #loading{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px}
 #loading.show{display:flex}
 #loading .spinner{width:50px;height:50px;border:4px solid var(--bd2);border-top-color:var(--ac);border-radius:50%;animation:spin 1s linear infinite}
@@ -211,7 +212,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div class="mode" id="modeText">OBJECT MODE</div>
       <div id="selText" style="color:#aaa;">Nothing selected</div>
     </div>
-    <div class="vp-info" id="info-bl">LMB Select · Shift+LMB Add · RMB/LMB-empty Rotate · Wheel Zoom · Drag&Drop Files</div>
+    <div class="vp-info" id="info-bl">LMB Select · Shift+LMB Add · RMB Rotate · Wheel Zoom · Drag&Drop Files</div>
     <div class="vp-info" id="info-br">—</div>
     <div id="tools">
       <button class="tool active" data-tool="select" title="Select (W)">↖</button>
@@ -288,7 +289,43 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
           <label class="check-row"><input type="checkbox" id="pWireframe"> Wireframe</label>
           <label class="check-row"><input type="checkbox" id="pFlat"> Flat Shading</label>
         </div></div>
-        <div class="grp"><div class="grp-h">Texture</div><div class="grp-b">
+
+        <div class="grp"><div class="grp-h">Photo Texture</div><div class="grp-b">
+          <div class="row"><span class="lbl">My Photo</span><div class="fields">
+            <button class="btn-sm primary" id="btnLoadTexFromPC" style="flex:1;">📷 Загрузить фото</button>
+          </div></div>
+          <div class="row"><span class="lbl">URL</span><div class="fields">
+            <div class="ifield" style="flex:1;"><input type="text" id="texURLInput" placeholder="https://…"></div>
+            <button class="btn-sm" id="btnLoadTexFromURL">→</button>
+          </div></div>
+          <div class="row"><span class="lbl">Fit</span><div class="fields">
+            <div class="ifield" style="flex:1;"><select id="pTexFit">
+              <option value="tile">Tile (повтор)</option>
+              <option value="stretch">Stretch</option>
+              <option value="fit">Fit</option>
+            </select></div>
+          </div></div>
+          <div class="row"><span class="lbl">Repeat</span><div class="fields">
+            <div class="ifield"><input type="number" id="pTexRepeatX" value="1" step="1" min="1" max="20"></div>
+            <div class="ifield"><input type="number" id="pTexRepeatY" value="1" step="1" min="1" max="20"></div>
+          </div></div>
+          <div class="row"><span class="lbl">Offset</span><div class="fields">
+            <div class="ifield"><input type="number" id="pTexOffsetX" value="0" step="0.05"></div>
+            <div class="ifield"><input type="number" id="pTexOffsetY" value="0" step="0.05"></div>
+          </div></div>
+          <div class="row"><span class="lbl">Rotation</span><div class="fields">
+            <input type="range" id="pTexRotation" min="0" max="360" step="1" value="0">
+            <span class="val" id="pTexRotationV">0°</span>
+          </div></div>
+          <div class="row"><span class="lbl">Preview</span><div class="fields" style="align-items:flex-start;">
+            <div style="display:flex;gap:6px;align-items:flex-start;">
+              <div id="tex-preview"></div>
+              <button class="btn-sm danger" id="btnClearTex">✕ Сброс</button>
+            </div>
+          </div></div>
+        </div></div>
+
+        <div class="grp"><div class="grp-h">Pattern Presets</div><div class="grp-b">
           <div class="row"><span class="lbl">Preset</span><div class="fields">
             <div class="ifield" style="flex:1;"><select id="pTexture">
               <option value="none">None</option>
@@ -304,12 +341,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
             </select></div>
           </div></div>
           <div class="row"><span class="lbl">Scale</span><div class="fields"><input type="range" id="pTexScale" min="0.5" max="30" step="0.1" value="4"><span class="val" id="pTexScaleV">4.0</span></div></div>
-          <div class="row"><span class="lbl">Repeat</span><div class="fields">
-            <div class="ifield"><input type="number" id="pTexRepeatX" value="1" step="1" min="1" max="20" title="Repeat X"></div>
-            <div class="ifield"><input type="number" id="pTexRepeatY" value="1" step="1" min="1" max="20" title="Repeat Y"></div>
-          </div></div>
         </div></div>
-        <div class="grp"><div class="grp-h">Presets</div><div class="grp-b">
+
+        <div class="grp"><div class="grp-h">Material Presets</div><div class="grp-b">
           <div class="btn-row">
             <button class="btn-sm" data-preset="default">Default</button>
             <button class="btn-sm" data-preset="orange">Orange</button>
@@ -387,7 +421,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     <div class="s">Keys: <b id="stKeys">0</b></div>
     <div class="s">FPS: <b id="stFps">60</b></div>
     <div class="spacer"></div>
-    <div><kbd>W</kbd><kbd>G</kbd><kbd>R</kbd><kbd>S</kbd> · <kbd>I</kbd> key · <kbd>Space</kbd> play · <kbd>Shift+клик</kbd> multi-select</div>
+    <div><kbd>W</kbd><kbd>G</kbd><kbd>R</kbd><kbd>S</kbd> · <kbd>I</kbd> key · <kbd>Space</kbd> play</div>
   </div>
 </div>
 
@@ -447,7 +481,8 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 /* ============ HELPERS ============ */
 function toast(msg,type){
   const el=document.getElementById('toast');
-  el.textContent=msg;el.className=type||'';
+  el.textContent=msg;
+  el.className=type||'';
   el.classList.add('show');
   clearTimeout(el._t);
   el._t=setTimeout(()=>el.classList.remove('show'),2000);
@@ -502,8 +537,8 @@ viewEl.addEventListener('mousedown',e=>{
   if(!orbit.enabled)return;
   if(e.target.closest('#tools')||e.target.closest('#nav-gizmo'))return;
   if(e.button===2){camState='rotate';}
-  else if(e.button===1){camState='pan';e.preventDefault()}
-  else if(e.button===0&&e.altKey){camState='rotate'}
+  else if(e.button===1){camState='pan';e.preventDefault();}
+  else if(e.button===0&&e.altKey){camState='rotate';}
   else return;
   camLastX=e.clientX;camLastY=e.clientY;
 });
@@ -548,7 +583,7 @@ function redrawGizmo(){
   let s='<circle cx="50" cy="50" r="46" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.05)"/>';
   const p=axes.map(a=>{
     const v=a.d.clone().applyMatrix4(inv);
-    return{...a,x:50+v.x*26,y:50-v.y*26,z:v.z}
+    return{...a,x:50+v.x*26,y:50-v.y*26,z:v.z};
   }).sort((a,b)=>a.z-b.z);
   p.forEach(a=>{
     const op=a.z>0?.4:1;
@@ -594,7 +629,7 @@ const transform=new TransformControls(camera,renderer.domElement);
 transform.setSize(0.85);
 transform.addEventListener('dragging-changed',e=>{orbit.enabled=!e.value});
 transform.addEventListener('objectChange',()=>{
-  if(selectedObjects.length===1){syncPropsFromSelection();updateOutline()}
+  if(selectedObjects.length===1){syncPropsFromSelection();updateOutline();}
 });
 transform.addEventListener('mouseUp',()=>{
   if(recording&&selectedObjects.length>0)autoRecord();
@@ -607,7 +642,7 @@ let outlineGroup=null;
 function updateOutline(){
   if(outlineGroup){
     scene.remove(outlineGroup);
-    outlineGroup.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});
+    outlineGroup.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});
     outlineGroup=null;
   }
   if(selectedObjects.length===0)return;
@@ -615,7 +650,9 @@ function updateOutline(){
   selectedObjects.forEach(sel=>{
     if(sel.isMesh&&sel.geometry){
       const edges=new THREE.EdgesGeometry(sel.geometry,20);
-      const line=new THREE.LineSegments(edges,new THREE.LineBasicMaterial({color:0xff8c1a,transparent:true,depthTest:false,depthWrite:false}));
+      const line=new THREE.LineSegments(edges,new THREE.LineBasicMaterial({
+        color:0xff8c1a,transparent:true,depthTest:false,depthWrite:false
+      }));
       line.position.copy(sel.position);
       line.rotation.copy(sel.rotation);
       line.scale.copy(sel.scale);
@@ -625,7 +662,7 @@ function updateOutline(){
     }
   });
   outlineGroup.renderOrder=999;
-  outlineGroup.traverse(o=>{o.raycast=()=>{}});
+  outlineGroup.traverse(o=>{o.raycast=()=>{};});
   scene.add(outlineGroup);
 }
 
@@ -655,10 +692,10 @@ const objects=[];
 const selectedObjects=[];
 let selected=null;
 const counters={};
-const typeNames={cube:'Cube',sphere:'Sphere',torus:'Torus',cylinder:'Cylinder',cone:'Cone',plane:'Plane',icosahedron:'Icosahedron',dodecahedron:'Dodecahedron',octahedron:'Octahedron',tetrahedron:'Tetrahedron',light:'PointLight',spotlight:'SpotLight',camera:'Camera',imported:'Imported'};
+const typeNames={cube:'Cube',sphere:'Sphere',torus:'Torus',cylinder:'Cylinder',cone:'Cone',plane:'Plane',icosahedron:'Icosahedron',dodecahedron:'Dodecahedron',octahedron:'Octahedron',tetrahedron:'Tetrahedron',light:'PointLight',spotlight:'SpotLight',imported:'Imported'};
 
 function emptyAnim(){
-  return{position:[],rotation:[],scale:[],color:[],metalness:[],roughness:[],opacity:[],emissive:[]}
+  return{position:[],rotation:[],scale:[],color:[],metalness:[],roughness:[],opacity:[],emissive:[]};
 }
 function makeGeom(t){
   switch(t){
@@ -675,6 +712,7 @@ function makeGeom(t){
     default:return new THREE.BoxGeometry(2,2,2);
   }
 }
+
 /* ============ TEXTURE GENERATOR ============ */
 function makeTexture(type,scale,color1,color2){
   const size=256;
@@ -794,7 +832,6 @@ function addObject(type,opts={}){
   markDirty();
   return obj;
 }
-
 /* ============ DELETE ============ */
 function deleteObject(obj){
   if(!obj)return;
@@ -810,11 +847,7 @@ function deleteObject(obj){
   const si=selectedObjects.indexOf(obj);
   if(si>-1)selectedObjects.splice(si,1);
   if(selected===obj)selected=selectedObjects[selectedObjects.length-1]||null;
-  refreshOutliner();
-  updateSelectionUI();
-  updateOutline();
-  rebuildAnim();
-  markDirty();
+  refreshOutliner();updateSelectionUI();updateOutline();rebuildAnim();markDirty();
 }
 function deleteSelected(){
   if(selectedObjects.length===0)return;
@@ -895,9 +928,7 @@ function selectAll(){
   selectedObjects.length=0;
   objects.forEach(o=>{if(o.visible)selectedObjects.push(o)});
   selected=selectedObjects[0]||null;
-  updateSelectionUI();
-  updateOutline();
-  rebuildAnim();
+  updateSelectionUI();updateOutline();rebuildAnim();
 }
 function deselectAll(){selectObject(null)}
 
@@ -907,7 +938,7 @@ function refreshOutliner(){
   el.innerHTML='';
   document.getElementById('stObj').textContent=objects.length;
   document.getElementById('objCountBadge').textContent=objects.length;
-  const icons={cube:'▢',sphere:'●',torus:'◎',cylinder:'⬭',cone:'▲',plane:'▭',icosahedron:'⬡',dodecahedron:'⬟',octahedron:'◆',tetrahedron:'▲',light:'💡',spotlight:'🔦',camera:'📷',imported:'📦'};
+  const icons={cube:'▢',sphere:'●',torus:'◎',cylinder:'⬭',cone:'▲',plane:'▭',icosahedron:'⬡',dodecahedron:'⬟',octahedron:'◆',tetrahedron:'▲',light:'💡',spotlight:'🔦',imported:'📦'};
   objects.forEach(o=>{
     const row=document.createElement('div');
     row.className='out-row';
@@ -1000,9 +1031,7 @@ function duplicateSelected(){
   selectedObjects.length=0;
   newObjs.forEach(o=>selectedObjects.push(o));
   selected=selectedObjects[0];
-  refreshOutliner();
-  updateSelectionUI();
-  updateOutline();
+  refreshOutliner();updateSelectionUI();updateOutline();
   toast(`Duplicated ${newObjs.length}`);
   markDirty();
 }
@@ -1040,8 +1069,7 @@ function bindTriple(ids,apply,channel){
       const v=parseFloat(el.value);
       if(isNaN(v))return;
       apply(selectedObjects[0],i,v);
-      updateOutline();
-      markDirty();
+      updateOutline();markDirty();
       if(recording)autoRecordChannel(channel);
     };
   });
@@ -1064,12 +1092,8 @@ document.querySelectorAll('[data-scrub]').forEach(tag=>{
       input.value=(startV+dx*speed).toFixed(isRot?2:3);
       input.dispatchEvent(new Event('input'));
     }
-    function up(){
-      window.removeEventListener('mousemove',mv);
-      window.removeEventListener('mouseup',up);
-    }
-    window.addEventListener('mousemove',mv);
-    window.addEventListener('mouseup',up);
+    function up(){window.removeEventListener('mousemove',mv);window.removeEventListener('mouseup',up)}
+    window.addEventListener('mousemove',mv);window.addEventListener('mouseup',up);
   });
 });
 document.querySelectorAll('[data-key]').forEach(k=>{k.onclick=e=>{e.stopPropagation();insertKeyframe(k.dataset.key)}});
@@ -1133,9 +1157,7 @@ document.getElementById('pName').oninput=e=>{
     selected.userData.name=e.target.value;
     document.getElementById('selText').textContent=e.target.value;
     document.getElementById('stSelName').textContent='· '+e.target.value;
-    refreshOutliner();
-    rebuildAnim();
-    markDirty();
+    refreshOutliner();rebuildAnim();markDirty();
   }
 };
 document.getElementById('pVisible').onchange=e=>{
@@ -1169,19 +1191,151 @@ document.getElementById('pEmColor').oninput=e=>applyMaterialProp('emissiveColor'
 document.getElementById('pWireframe').onchange=e=>applyMaterialProp('wireframe',e.target.checked);
 document.getElementById('pFlat').onchange=e=>applyMaterialProp('flat',e.target.checked);
 
-/* ============ TEXTURE ============ */
+/* ============ CUSTOM TEXTURE FROM PHOTO ============ */
+let currentCustomTexture=null;
+
+document.getElementById('btnLoadTexFromPC').addEventListener('click',()=>{
+  if(selectedObjects.length===0){toast('Выбери объект','error');return}
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='image/*';
+  input.onchange=e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>loadTextureFromDataURL(ev.target.result,file.name);
+    reader.readAsDataURL(file);
+  };
+  input.click();
+});
+
+document.getElementById('btnLoadTexFromURL').addEventListener('click',()=>{
+  if(selectedObjects.length===0){toast('Выбери объект','error');return}
+  const url=document.getElementById('texURLInput').value.trim();
+  if(!url){toast('Введи URL','error');return}
+  const loader=new THREE.TextureLoader();
+  loader.setCrossOrigin('anonymous');
+  showLoading('Загрузка текстуры…');
+  loader.load(url,
+    tex=>{hideLoading();applyCustomTexture(tex,url.split('/').pop());},
+    undefined,
+    err=>{hideLoading();toast('CORS-ошибка. Скачай фото и загрузи через 📷','error');console.error(err);}
+  );
+});
+
+function loadTextureFromDataURL(dataURL,name){
+  const img=new Image();
+  img.onload=()=>{
+    const tex=new THREE.Texture(img);
+    tex.needsUpdate=true;
+    applyCustomTexture(tex,name);
+  };
+  img.onerror=()=>toast('Ошибка чтения изображения','error');
+  img.src=dataURL;
+}
+
+function applyCustomTexture(tex,name){
+  if(selectedObjects.length===0)return;
+  const fit=document.getElementById('pTexFit').value;
+  const rx=parseInt(document.getElementById('pTexRepeatX').value)||1;
+  const ry=parseInt(document.getElementById('pTexRepeatY').value)||1;
+  const ox=parseFloat(document.getElementById('pTexOffsetX').value)||0;
+  const oy=parseFloat(document.getElementById('pTexOffsetY').value)||0;
+  const rot=parseFloat(document.getElementById('pTexRotation').value)||0;
+
+  tex.colorSpace=THREE.SRGBColorSpace;
+  tex.wrapS=tex.wrapT=(fit==='tile')?THREE.RepeatWrapping:THREE.ClampToEdgeWrapping;
+  tex.repeat.set(fit==='tile'?rx:1,fit==='tile'?ry:1);
+  tex.offset.set(ox,oy);
+  tex.center.set(0.5,0.5);
+  tex.rotation=rot*Math.PI/180;
+  tex.anisotropy=8;
+  tex.needsUpdate=true;
+
+  selectedObjects.forEach(o=>{
+    if(!o.isMesh)return;
+    if(o.material.map)o.material.map.dispose();
+    o.material.map=tex.clone();
+    o.material.map.needsUpdate=true;
+    o.material.color.setHex(0xffffff);
+    o.material.needsUpdate=true;
+  });
+
+  currentCustomTexture={tex,name};
+
+  // Превью
+  const preview=document.getElementById('tex-preview');
+  if(preview&&tex.image){
+    const c=document.createElement('canvas');
+    c.width=128;c.height=128;
+    const ctx=c.getContext('2d');
+    ctx.drawImage(tex.image,0,0,128,128);
+    preview.style.backgroundImage=`url(${c.toDataURL()})`;
+  }
+
+  const preset=document.getElementById('pTexture');
+  if(preset)preset.value='none';
+
+  toast('Текстура: '+name,'success');
+  markDirty();
+}
+
+['pTexRepeatX','pTexRepeatY','pTexOffsetX','pTexOffsetY','pTexRotation','pTexFit'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('input',updateCustomTextureParams);
+  el.addEventListener('change',updateCustomTextureParams);
+});
+function updateCustomTextureParams(){
+  if(!currentCustomTexture)return;
+  const fit=document.getElementById('pTexFit').value;
+  const rx=parseInt(document.getElementById('pTexRepeatX').value)||1;
+  const ry=parseInt(document.getElementById('pTexRepeatY').value)||1;
+  const ox=parseFloat(document.getElementById('pTexOffsetX').value)||0;
+  const oy=parseFloat(document.getElementById('pTexOffsetY').value)||0;
+  const rot=parseFloat(document.getElementById('pTexRotation').value)||0;
+  document.getElementById('pTexRotationV').textContent=rot+'°';
+
+  selectedObjects.forEach(o=>{
+    if(!o.isMesh||!o.material.map)return;
+    const tex=o.material.map;
+    tex.wrapS=tex.wrapT=(fit==='tile')?THREE.RepeatWrapping:THREE.ClampToEdgeWrapping;
+    tex.repeat.set(fit==='tile'?rx:1,fit==='tile'?ry:1);
+    tex.offset.set(ox,oy);
+    tex.center.set(0.5,0.5);
+    tex.rotation=rot*Math.PI/180;
+    tex.needsUpdate=true;
+  });
+  markDirty();
+}
+
+document.getElementById('btnClearTex').addEventListener('click',()=>{
+  selectedObjects.forEach(o=>{
+    if(!o.isMesh)return;
+    if(o.material.map){o.material.map.dispose();o.material.map=null;}
+    o.material.needsUpdate=true;
+  });
+  currentCustomTexture=null;
+  document.getElementById('tex-preview').style.backgroundImage='';
+  toast('Текстура сброшена');
+});
+
+/* ============ PATTERN PRESETS ============ */
 document.getElementById('pTexture').onchange=e=>{
   const preset=e.target.value;
   if(selectedObjects.length===0)return;
   const scale=parseFloat(document.getElementById('pTexScale').value)||4;
+  if(preset==='none'){
+    selectedObjects.forEach(o=>{
+      if(!o.isMesh)return;
+      if(o.material.map){o.material.map.dispose();o.material.map=null;o.material.needsUpdate=true}
+    });
+    return;
+  }
   const rx=parseInt(document.getElementById('pTexRepeatX').value)||1;
   const ry=parseInt(document.getElementById('pTexRepeatY').value)||1;
   selectedObjects.forEach(o=>{
     if(!o.isMesh)return;
-    if(preset==='none'){
-      if(o.material.map){o.material.map.dispose();o.material.map=null;o.material.needsUpdate=true}
-      return;
-    }
     const color1='#'+o.material.color.getHexString();
     const tex=makeTexture(preset,scale,color1,'#222222');
     tex.repeat.set(rx,ry);
@@ -1197,10 +1351,8 @@ document.getElementById('pTexScale').oninput=e=>{
   const preset=document.getElementById('pTexture').value;
   if(preset!=='none')document.getElementById('pTexture').dispatchEvent(new Event('change'));
 };
-document.getElementById('pTexRepeatX').oninput=()=>document.getElementById('pTexture').dispatchEvent(new Event('change'));
-document.getElementById('pTexRepeatY').oninput=()=>document.getElementById('pTexture').dispatchEvent(new Event('change'));
 
-/* ============ PRESETS ============ */
+/* ============ MATERIAL PRESETS ============ */
 const presets={
   default:{color:0xcccccc,metalness:0.1,roughness:0.55,opacity:1,emissive:0},
   orange:{color:0xe87d0d,metalness:0.1,roughness:0.55},
@@ -1285,12 +1437,10 @@ async function importFile(file){
         const data=JSON.parse(ev.target.result);
         applyData(data);
         document.getElementById('fname').textContent=file.name.replace(/\.blend\.json$|\.json$/,'');
-        clearDirty();
-        toast('Scene loaded: '+file.name);
+        clearDirty();toast('Scene loaded: '+file.name);
       }catch(err){toast('Load error: '+err.message,'error')}
     };
-    r.readAsText(file);
-    return;
+    r.readAsText(file);return;
   }
   showLoading('Загрузка '+file.name+'…');
   const url=URL.createObjectURL(file);
@@ -1302,8 +1452,7 @@ async function importFile(file){
       draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
       loader.setDRACOLoader(draco);
       const result=await new Promise((res,rej)=>loader.load(url,res,undefined,rej));
-      root=result.scene;
-      animations=result.animations;
+      root=result.scene;animations=result.animations;
     }else if(format==='obj'){
       const loader=new OBJLoader();
       root=await new Promise((res,rej)=>loader.load(url,res,undefined,rej));
@@ -1324,11 +1473,9 @@ async function importFile(file){
     console.error(err);
     toast('Ошибка импорта: '+err.message,'error');
   }finally{
-    URL.revokeObjectURL(url);
-    hideLoading();
+    URL.revokeObjectURL(url);hideLoading();
   }
 }
-
 function addImported(root,name,animations){
   const box=new THREE.Box3().setFromObject(root);
   const size=box.getSize(new THREE.Vector3());
@@ -1342,8 +1489,7 @@ function addImported(root,name,animations){
   root.scale.setScalar(scale);
   root.traverse(o=>{
     if(o.isMesh){
-      o.castShadow=true;
-      o.receiveShadow=true;
+      o.castShadow=true;o.receiveShadow=true;
       if(o.material&&o.material.isMeshStandardMaterial){
         o.material.metalness=o.material.metalness??0.1;
         o.material.roughness=o.material.roughness??0.55;
@@ -1357,11 +1503,7 @@ function addImported(root,name,animations){
   root.userData.animations=emptyAnim();
   root.userData.imported=true;
   if(animations&&animations.length>0)root.userData.sourceAnimations=animations;
-  scene.add(root);
-  objects.push(root);
-  selectObject(root);
-  refreshOutliner();
-  markDirty();
+  scene.add(root);objects.push(root);selectObject(root);refreshOutliner();markDirty();
   toast(`Импортировано: ${root.userData.name}`,'success');
 }
 
@@ -1381,7 +1523,16 @@ viewEl.addEventListener('drop',async e=>{
   viewEl.classList.remove('dragover');
   dragCounter=0;
   const files=Array.from(e.dataTransfer.files);
-  for(const f of files){await importFile(f)}
+  const modelFiles=files.filter(f=>/\.(glb|gltf|obj|stl|fbx|json)$/i.test(f.name));
+  const imageFiles=files.filter(f=>/\.(png|jpg|jpeg|webp|gif|bmp)$/i.test(f.name));
+  for(const f of modelFiles)await importFile(f);
+  if(imageFiles.length>0){
+    if(selectedObjects.length===0){toast('Сначала выдели объект, потом кидай фото','warn');return}
+    const file=imageFiles[0];
+    const reader=new FileReader();
+    reader.onload=ev=>loadTextureFromDataURL(ev.target.result,file.name);
+    reader.readAsDataURL(file);
+  }
 });
 /* ============ ANIMATION SYSTEM ============ */
 const anim={current:1,start:1,end:120,fps:24,playing:false,lastTime:0,acc:0,interpolation:'smooth'};
@@ -1510,8 +1661,7 @@ function updateAnimInfo(){
 function rebuildAnim(){
   const ruler=document.getElementById('anim-ruler');
   const keysEl=document.getElementById('anim-keys');
-  ruler.innerHTML='';
-  keysEl.innerHTML='';
+  ruler.innerHTML='';keysEl.innerHTML='';
   const track=document.getElementById('anim-track');
   const offset=150;
   const usable=Math.max(0,track.clientWidth-offset);
@@ -1571,9 +1721,7 @@ function rebuildAnim(){
             e.stopPropagation();
             if(e.altKey){
               o.userData.animations[ch]=o.userData.animations[ch].filter(x=>x.frame!==k.frame);
-              rebuildAnim();
-              updateAnimInfo();
-              markDirty();
+              rebuildAnim();updateAnimInfo();markDirty();
             }else setFrame(k.frame);
           };
           sc.appendChild(d);
@@ -1621,14 +1769,16 @@ fFrameEl.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
     e.preventDefault();
     const v=parseInt(e.target.value);
-    if(!isNaN(v))setFrame(v);else e.target.value=anim.current;
+    if(!isNaN(v))setFrame(v);
+    else e.target.value=anim.current;
     e.target.blur();
   }
   if(e.key==='Escape'){e.target.value=anim.current;e.target.blur()}
 });
 fFrameEl.addEventListener('change',e=>{
   const v=parseInt(e.target.value);
-  if(!isNaN(v))setFrame(v);else e.target.value=anim.current;
+  if(!isNaN(v))setFrame(v);
+  else e.target.value=anim.current;
 });
 document.getElementById('fStart').onchange=e=>{
   const v=parseInt(e.target.value);
@@ -1704,31 +1854,6 @@ function deleteKeyAtFrame(){
   markDirty();
 }
 
-/* ============ UNDO/REDO ============ */
-const history=[];
-let historyIndex=-1;
-function pushHistory(){
-  try{
-    const snap=JSON.stringify(serialize());
-    if(historyIndex<history.length-1)history.splice(historyIndex+1);
-    history.push(snap);
-    if(history.length>50)history.shift();
-    historyIndex=history.length-1;
-  }catch(e){}
-}
-function undo(){
-  if(historyIndex<=0){toast('Nothing to undo');return}
-  historyIndex--;
-  applyData(JSON.parse(history[historyIndex]));
-  toast('Undo');
-}
-function redo(){
-  if(historyIndex>=history.length-1){toast('Nothing to redo');return}
-  historyIndex++;
-  applyData(JSON.parse(history[historyIndex]));
-  toast('Redo');
-}
-
 /* ============ SAVE/LOAD ============ */
 function serialize(){
   return{
@@ -1787,8 +1912,7 @@ function applyData(data){
     orbit.radius=off.length();
     orbit.theta=Math.atan2(off.x,off.z);
     orbit.phi=Math.acos(off.y/orbit.radius);
-    orbit.update();
-    redrawGizmo();
+    orbit.update();redrawGizmo();
   }
   (data.objects||[]).forEach(od=>{
     const type=od.type;
@@ -1805,10 +1929,7 @@ function applyData(data){
     if(obj.isMesh){
       obj.material.metalness=od.metal??0.1;
       obj.material.roughness=od.rough??0.55;
-      if(od.opacity!==undefined){
-        obj.material.opacity=od.opacity;
-        obj.material.transparent=od.opacity<1;
-      }
+      if(od.opacity!==undefined){obj.material.opacity=od.opacity;obj.material.transparent=od.opacity<1}
       if(od.emissive!==undefined)obj.material.emissiveIntensity=od.emissive;
       if(od.emissiveColor)obj.material.emissive.setHex(od.emissiveColor);
       if(od.wireframe)obj.material.wireframe=true;
@@ -1823,14 +1944,11 @@ function applyData(data){
     if(od.animations)obj.userData.animations=od.animations;
   });
   selectObject(null);
-  refreshOutliner();
-  rebuildAnim();
+  refreshOutliner();rebuildAnim();
   document.getElementById('fFrame').value=anim.current;
   document.getElementById('curFrame').textContent=anim.current;
   document.getElementById('stFrame').textContent=anim.current;
-  applyAnim(anim.current);
-  updatePlayhead();
-  updateAnimInfo();
+  applyAnim(anim.current);updatePlayhead();updateAnimInfo();
 }
 function saveScene(){
   try{
@@ -1838,18 +1956,14 @@ function saveScene(){
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     const name=(document.getElementById('fname').textContent||'Untitled').replace(/\.blend\.json$/,'');
-    a.href=url;
-    a.download=name+'.blend.json';
-    a.click();
+    a.href=url;a.download=name+'.blend.json';a.click();
     setTimeout(()=>URL.revokeObjectURL(url),800);
-    clearDirty();
-    toast('Saved');
+    clearDirty();toast('Saved');
   }catch(e){toast('Save failed: '+e.message,'error')}
 }
 function openScene(){
   const input=document.createElement('input');
-  input.type='file';
-  input.accept='.json,.blend.json';
+  input.type='file';input.accept='.json,.blend.json';
   input.onchange=e=>{
     const f=e.target.files[0];
     if(!f)return;
@@ -1859,8 +1973,7 @@ function openScene(){
         const data=JSON.parse(ev.target.result);
         applyData(data);
         document.getElementById('fname').textContent=f.name.replace(/\.blend\.json$|\.json$/,'');
-        clearDirty();
-        toast('Loaded: '+f.name);
+        clearDirty();toast('Loaded: '+f.name);
       }catch(err){toast('Load error: '+err.message,'error')}
     };
     r.readAsText(f);
@@ -1871,9 +1984,7 @@ function renderPNG(){
   renderer.render(scene,camera);
   const url=renderer.domElement.toDataURL('image/png');
   const a=document.createElement('a');
-  a.href=url;
-  a.download='render_'+Date.now()+'.png';
-  a.click();
+  a.href=url;a.download='render_'+Date.now()+'.png';a.click();
   toast('Rendered');
 }
 function newScene(){
@@ -1886,9 +1997,7 @@ function newScene(){
       else o.material.dispose();
     }
   });
-  objects.length=0;
-  selectedObjects.length=0;
-  selected=null;
+  objects.length=0;selectedObjects.length=0;selected=null;
   Object.keys(counters).forEach(k=>delete counters[k]);
   anim.current=1;anim.start=1;anim.end=120;anim.fps=24;
   document.getElementById('fStart').value=1;
@@ -1901,8 +2010,7 @@ function newScene(){
   document.getElementById('curFrame').textContent=1;
   document.getElementById('stFrame').textContent=1;
   applyAnim(1);
-  clearDirty();
-  toast('New scene');
+  clearDirty();toast('New scene');
 }
 
 /* ============ MENU ============ */
@@ -1935,8 +2043,6 @@ function doAction(a){
     case'import-model':importModel();break;
     case'save':saveScene();break;
     case'render':renderPNG();break;
-    case'undo':undo();break;
-    case'redo':redo();break;
     case'duplicate':duplicateSelected();break;
     case'delete':deleteSelected();break;
     case'select-all':selectAll();break;
@@ -1968,8 +2074,7 @@ function animateCamera(pos,target){
     orbit.radius=off.length();
     orbit.theta=Math.atan2(off.x,off.z);
     orbit.phi=Math.acos(off.y/orbit.radius);
-    orbit.update();
-    redrawGizmo();
+    orbit.update();redrawGizmo();
     if(t<1)requestAnimationFrame(tick);
   }
   tick();
@@ -2034,9 +2139,7 @@ window.addEventListener('mouseup',e=>{
     selectedObjects.length=0;
     newSel.forEach(o=>selectedObjects.push(o));
     selected=selectedObjects[selectedObjects.length-1]||null;
-    updateSelectionUI();
-    updateOutline();
-    rebuildAnim();
+    updateSelectionUI();updateOutline();rebuildAnim();
     toast(`Selected ${newSel.length} object(s)`);
     return;
   }
@@ -2073,8 +2176,6 @@ window.addEventListener('keydown',e=>{
     if(k==='c'){e.preventDefault();copyKeyframe();return}
     if(k==='v'){e.preventDefault();pasteKeyframe();return}
     if(k==='a'){e.preventDefault();selectAll();return}
-    if(k==='z'){e.preventDefault();undo();return}
-    if(k==='y'){e.preventDefault();redo();return}
     return;
   }
   if(e.altKey&&k==='a'){e.preventDefault();deselectAll();return}
@@ -2150,9 +2251,7 @@ function animate(){
       if(document.activeElement!==fFrame)fFrame.value=f;
       document.getElementById('curFrame').textContent=f;
       document.getElementById('stFrame').textContent=f;
-      applyAnim(f);
-      updatePlayhead();
-      updateAnimInfo();
+      applyAnim(f);updatePlayhead();updateAnimInfo();
     }
   }else{
     anim.lastTime=0;
@@ -2165,18 +2264,15 @@ function animate(){
   lastTime=now;
   if(fpsTime>400){
     document.getElementById('stFps').textContent=Math.round(frames/(fpsTime/1000));
-    frames=0;
-    fpsTime=0;
+    frames=0;fpsTime=0;
   }
 }
 animate();
 
-console.log('%cBlender Web v4','color:#e87d0d;font-size:22px;font-weight:800');
-console.log('%cМультивыделение: Shift+клик · Ctrl+A всё · Shift+Alt+drag рамка','color:#6ab04c');
-console.log('%cИмпорт: File → Import Model, или drag&drop файла .glb/.gltf/.obj/.stl/.fbx','color:#6ab04c');
-console.log('%cТекстуры: Presets в Material tab','color:#6ab04c');
-console.log('%cСвет: Add → Point/Spot Light','color:#6ab04c');
-console.log('%cUndo/Redo: Ctrl+Z / Ctrl+Y · Save: Ctrl+S · Render: F12','color:#6ab04c');
+console.log('%cBlender Web — готово!','color:#e87d0d;font-size:22px;font-weight:800');
+console.log('%c📷 Фото-текстура: Material tab → Photo Texture → Загрузить фото','color:#6ab04c');
+console.log('%c📦 Импорт моделей: File → Import Model или drag&drop .glb/.obj/.stl/.fbx','color:#6ab04c');
+console.log('%c🎯 Мультивыделение: Shift+клик · Ctrl+A · Shift+Alt+drag рамка','color:#6ab04c');
 </script>
 </body>
 </html>
