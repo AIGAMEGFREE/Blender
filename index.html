@@ -40,9 +40,17 @@ input,select{font-family:inherit}
 .tool{width:34px;height:34px;background:rgba(30,30,30,.8);border:1px solid rgba(255,255,255,.08);border-radius:4px;color:#ccc;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .tool:hover{background:rgba(70,70,70,.9)}
 .tool.active{background:var(--ac);color:#fff;border-color:var(--ac)}
+.tool.rec{background:#5c1a1a;color:#ff8888;border-color:#8a3a3a}
+.tool.rec.on{background:var(--red);color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.5}}
 #nav-gizmo{position:absolute;bottom:10px;right:10px;width:100px;height:100px;z-index:7;cursor:grab;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
 #nav-gizmo:active{cursor:grabbing}
 #sel-box{position:absolute;border:1px solid var(--ac);background:rgba(232,125,13,.15);display:none;pointer-events:none;z-index:20}
+#preview-cam{position:absolute;bottom:130px;right:10px;width:240px;height:135px;background:#000;border:2px solid var(--ac);border-radius:6px;display:none;z-index:8;box-shadow:0 8px 24px rgba(0,0,0,.7)}
+#preview-cam.show{display:block}
+#preview-cam .label{position:absolute;top:4px;left:8px;color:#fff;font-size:10px;background:rgba(0,0,0,.6);padding:2px 6px;border-radius:3px;pointer-events:none}
+#preview-cam .rec-dot{position:absolute;top:6px;right:8px;width:10px;height:10px;background:var(--red);border-radius:50%;display:none;animation:pulse 1s infinite}
+#preview-cam.recording .rec-dot{display:block}
 #right{grid-area:right;background:var(--bg2);display:flex;flex-direction:column;overflow:hidden}
 .panel-head{background:var(--bg3);padding:5px 10px;font-size:10px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;cursor:pointer;min-height:22px}
 .panel-head:hover{background:var(--bg4)}
@@ -88,7 +96,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .btn-sm:hover{background:var(--hov)}
 .btn-sm.primary{background:var(--ac);color:#fff;border-color:var(--ac)}
 .btn-sm.danger{background:#5c1a1a;color:#ff9999;border-color:#8a3a3a}
-#tex-preview{width:80px;height:80px;background:#111;border:1px solid var(--bd2);border-radius:4px;background-size:cover;background-position:center;margin-top:4px}
+#tex-preview,#bg-preview{width:80px;height:80px;background:#111;border:1px solid var(--bd2);border-radius:4px;background-size:cover;background-position:center;margin-top:4px}
 #anim{grid-area:anim;background:var(--bg2);border-top:1px solid var(--bd);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
 #anim-controls{display:flex;align-items:center;gap:4px;padding:5px 8px;background:var(--bg3);border-bottom:1px solid var(--bd);font-size:11px;flex-wrap:wrap}
 .tl-btn{background:var(--bg1);border:1px solid var(--bd2);color:var(--text);min-width:30px;height:24px;padding:0 8px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .1s}
@@ -157,13 +165,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
         <div class="mi" data-act="save">Save (.blend.json)<span class="sc">Ctrl+S</span></div>
         <div class="sep"></div>
         <div class="mi" data-act="render">Render PNG<span class="sc">F12</span></div>
+        <div class="mi" data-act="video-rec">🎥 Record Video<span class="sc">Ctrl+R</span></div>
+        <div class="mi" data-act="video-from-cam">🎥 Record from Active Camera</div>
       </div>
     </div>
     <div class="menu-btn" data-menu="edit">Edit
       <div class="menu-drop">
-        <div class="mi" data-act="undo">Undo<span class="sc">Ctrl+Z</span></div>
-        <div class="mi" data-act="redo">Redo<span class="sc">Ctrl+Y</span></div>
-        <div class="sep"></div>
         <div class="mi" data-act="duplicate">Duplicate<span class="sc">Shift+D</span></div>
         <div class="mi" data-act="delete">Delete<span class="sc">X</span></div>
         <div class="mi" data-act="select-all">Select All<span class="sc">Ctrl+A</span></div>
@@ -188,6 +195,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
         <div class="sep"></div>
         <div class="mi" data-act="add:light">Point Light</div>
         <div class="mi" data-act="add:spotlight">Spot Light</div>
+        <div class="mi" data-act="add:camera">🎥 Camera</div>
       </div>
     </div>
     <div class="menu-btn" data-menu="anim">Animation
@@ -212,7 +220,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div class="mode" id="modeText">OBJECT MODE</div>
       <div id="selText" style="color:#aaa;">Nothing selected</div>
     </div>
-    <div class="vp-info" id="info-bl">LMB Select · Shift+LMB Add · RMB Rotate · Wheel Zoom · Drag&Drop Files</div>
+    <div class="vp-info" id="info-bl">LMB Select · Shift+LMB Add · RMB Rotate · Wheel Zoom · Drag&Drop</div>
     <div class="vp-info" id="info-br">—</div>
     <div id="tools">
       <button class="tool active" data-tool="select" title="Select (W)">↖</button>
@@ -225,9 +233,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <button class="tool" data-tool="del" title="Delete (X)">✕</button>
       <button class="tool" data-tool="key" title="Keyframe (I)">◆</button>
       <button class="tool" data-tool="focus" title="Focus (.)">⊙</button>
+      <button class="tool rec" data-tool="video" id="btnVideoTool" title="Record Video (Ctrl+R)">🎥</button>
     </div>
     <svg id="nav-gizmo" viewBox="0 0 100 100"></svg>
     <div id="sel-box"></div>
+    <div id="preview-cam">
+      <div class="label" id="previewCamLabel">Camera Preview</div>
+      <div class="rec-dot"></div>
+      <canvas id="previewCanvas" width="480" height="270"></canvas>
+    </div>
   </div>
 
   <div id="right">
@@ -237,6 +251,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div class="tab active" data-tab="object">⚙</div>
       <div class="tab" data-tab="transform">↔</div>
       <div class="tab" data-tab="material">🎨</div>
+      <div class="tab" data-tab="scene">🌄</div>
       <div class="tab" data-tab="light">💡</div>
       <div class="tab" data-tab="animation">🎬</div>
     </div>
@@ -248,6 +263,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
           <label class="check-row"><input type="checkbox" id="pVisible" checked> Visible</label>
           <label class="check-row"><input type="checkbox" id="pCastShadow" checked> Cast shadow</label>
           <label class="check-row"><input type="checkbox" id="pReceiveShadow" checked> Receive shadow</label>
+          <button class="btn-sm primary" id="btnLookThrough" style="display:none;width:100%;margin-top:6px;">👁 Смотреть через камеру</button>
         </div></div>
         <div class="grp"><div class="grp-h">Actions</div><div class="grp-b">
           <div class="btn-row">
@@ -320,7 +336,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
           <div class="row"><span class="lbl">Preview</span><div class="fields" style="align-items:flex-start;">
             <div style="display:flex;gap:6px;align-items:flex-start;">
               <div id="tex-preview"></div>
-              <button class="btn-sm danger" id="btnClearTex">✕ Сброс</button>
+              <button class="btn-sm danger" id="btnClearTex">✕</button>
             </div>
           </div></div>
         </div></div>
@@ -358,6 +374,70 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
             <button class="btn-sm" data-preset="emissive">Emissive</button>
             <button class="btn-sm" data-preset="rubber">Rubber</button>
           </div>
+        </div></div>
+      </div>
+
+      <div class="tab-content" data-tab-content="scene">
+        <div class="grp"><div class="grp-h">Background</div><div class="grp-b">
+          <div class="row"><span class="lbl">Color</span><div class="fields">
+            <div class="ifield" style="flex:1;"><input type="color" id="bgColorPicker" value="#3a3a3a"></div>
+          </div></div>
+          <div class="row"><span class="lbl">Image</span><div class="fields">
+            <button class="btn-sm primary" id="btnLoadBGImage" style="flex:1;">🖼 Загрузить фото-фон</button>
+          </div></div>
+          <div class="row"><span class="lbl">URL</span><div class="fields">
+            <div class="ifield" style="flex:1;"><input type="text" id="bgURLInput" placeholder="https://…"></div>
+            <button class="btn-sm" id="btnLoadBGFromURL">→</button>
+          </div></div>
+          <div class="row"><span class="lbl">Fit</span><div class="fields">
+            <div class="ifield" style="flex:1;"><select id="bgFit">
+              <option value="cover">Cover (заполнить)</option>
+              <option value="contain">Contain (вписать)</option>
+              <option value="stretch">Stretch (растянуть)</option>
+            </select></div>
+          </div></div>
+          <div class="row"><span class="lbl">Blur</span><div class="fields">
+            <input type="range" id="bgBlur" min="0" max="30" step="0.5" value="0">
+            <span class="val" id="bgBlurV">0</span>
+          </div></div>
+          <div class="row"><span class="lbl">Brightness</span><div class="fields">
+            <input type="range" id="bgBrightness" min="0" max="2" step="0.05" value="1">
+            <span class="val" id="bgBrightnessV">1.00</span>
+          </div></div>
+          <div class="row"><span class="lbl">Preview</span><div class="fields">
+            <div style="display:flex;gap:6px;align-items:flex-start;">
+              <div id="bg-preview"></div>
+              <button class="btn-sm danger" id="btnClearBGImage">✕ Сброс</button>
+            </div>
+          </div></div>
+        </div></div>
+
+        <div class="grp"><div class="grp-h">Render</div><div class="grp-b">
+          <div class="btn-row">
+            <button class="btn-sm" data-act="render">Render PNG (F12)</button>
+            <button class="btn-sm primary" data-act="video-rec">🎥 Record Video</button>
+          </div>
+          <div class="row"><span class="lbl">FPS</span><div class="fields">
+            <div class="ifield" style="flex:1;"><select id="videoFps">
+              <option value="24">24</option>
+              <option value="30" selected>30</option>
+              <option value="60">60</option>
+            </select></div>
+          </div></div>
+          <div class="row"><span class="lbl">Quality</span><div class="fields">
+            <div class="ifield" style="flex:1;"><select id="videoQuality">
+              <option value="2000000">Низкое (2 Mbps)</option>
+              <option value="5000000" selected>Среднее (5 Mbps)</option>
+              <option value="10000000">Высокое (10 Mbps)</option>
+              <option value="20000000">Максимум (20 Mbps)</option>
+            </select></div>
+          </div></div>
+          <div class="row"><span class="lbl">Source</span><div class="fields">
+            <div class="ifield" style="flex:1;"><select id="videoSource">
+              <option value="viewport">Viewport</option>
+              <option value="camera">Active Camera</option>
+            </select></div>
+          </div></div>
         </div></div>
       </div>
 
@@ -421,7 +501,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     <div class="s">Keys: <b id="stKeys">0</b></div>
     <div class="s">FPS: <b id="stFps">60</b></div>
     <div class="spacer"></div>
-    <div><kbd>W</kbd><kbd>G</kbd><kbd>R</kbd><kbd>S</kbd> · <kbd>I</kbd> key · <kbd>Space</kbd> play</div>
+    <div><kbd>W</kbd><kbd>G</kbd><kbd>R</kbd><kbd>S</kbd> · <kbd>I</kbd> key · <kbd>Space</kbd> play · <kbd>Ctrl+R</kbd> video</div>
   </div>
 </div>
 
@@ -441,6 +521,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div class="aitem" data-add="tetrahedron"><span class="ic">▲</span>Tetrahedron</div>
       <div class="aitem" data-add="light"><span class="ic">💡</span>Point Light</div>
       <div class="aitem" data-add="spotlight"><span class="ic">🔦</span>Spot Light</div>
+      <div class="aitem" data-add="camera"><span class="ic">🎥</span>Camera</div>
     </div>
   </div>
 </div>
@@ -481,11 +562,10 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 /* ============ HELPERS ============ */
 function toast(msg,type){
   const el=document.getElementById('toast');
-  el.textContent=msg;
-  el.className=type||'';
+  el.textContent=msg;el.className=type||'';
   el.classList.add('show');
   clearTimeout(el._t);
-  el._t=setTimeout(()=>el.classList.remove('show'),2000);
+  el._t=setTimeout(()=>el.classList.remove('show'),2500);
 }
 function showLoading(msg){
   document.getElementById('loadingMsg').textContent=msg;
@@ -535,7 +615,7 @@ let camState='none',camLastX=0,camLastY=0;
 viewEl.addEventListener('contextmenu',e=>e.preventDefault());
 viewEl.addEventListener('mousedown',e=>{
   if(!orbit.enabled)return;
-  if(e.target.closest('#tools')||e.target.closest('#nav-gizmo'))return;
+  if(e.target.closest('#tools')||e.target.closest('#nav-gizmo')||e.target.closest('#preview-cam'))return;
   if(e.button===2){camState='rotate';}
   else if(e.button===1){camState='pan';e.preventDefault();}
   else if(e.button===0&&e.altKey){camState='rotate';}
@@ -648,7 +728,7 @@ function updateOutline(){
   if(selectedObjects.length===0)return;
   outlineGroup=new THREE.Group();
   selectedObjects.forEach(sel=>{
-    if(sel.isMesh&&sel.geometry){
+    if(sel.isMesh&&sel.geometry&&sel.userData.type!=='camera'){
       const edges=new THREE.EdgesGeometry(sel.geometry,20);
       const line=new THREE.LineSegments(edges,new THREE.LineBasicMaterial({
         color:0xff8c1a,transparent:true,depthTest:false,depthWrite:false
@@ -659,6 +739,25 @@ function updateOutline(){
       line.raycast=()=>{};
       line.renderOrder=999;
       outlineGroup.add(line);
+    }else{
+      // Для камер/групп — просто бокс
+      sel.traverse(child=>{
+        if(child.isMesh&&!child.userData.isHelper){
+          const edges=new THREE.EdgesGeometry(child.geometry,20);
+          const line=new THREE.LineSegments(edges,new THREE.LineBasicMaterial({
+            color:0xff8c1a,transparent:true,depthTest:false,depthWrite:false
+          }));
+          line.position.copy(child.position);
+          line.rotation.copy(child.rotation);
+          line.scale.copy(child.scale);
+          line.raycast=()=>{};
+          line.renderOrder=999;
+          outlineGroup.add(line);
+        }
+      });
+      outlineGroup.position.copy(sel.position);
+      outlineGroup.rotation.copy(sel.rotation);
+      outlineGroup.scale.copy(sel.scale);
     }
   });
   outlineGroup.renderOrder=999;
@@ -692,7 +791,7 @@ const objects=[];
 const selectedObjects=[];
 let selected=null;
 const counters={};
-const typeNames={cube:'Cube',sphere:'Sphere',torus:'Torus',cylinder:'Cylinder',cone:'Cone',plane:'Plane',icosahedron:'Icosahedron',dodecahedron:'Dodecahedron',octahedron:'Octahedron',tetrahedron:'Tetrahedron',light:'PointLight',spotlight:'SpotLight',imported:'Imported'};
+const typeNames={cube:'Cube',sphere:'Sphere',torus:'Torus',cylinder:'Cylinder',cone:'Cone',plane:'Plane',icosahedron:'Icosahedron',dodecahedron:'Dodecahedron',octahedron:'Octahedron',tetrahedron:'Tetrahedron',light:'PointLight',spotlight:'SpotLight',camera:'Camera',imported:'Imported'};
 
 function emptyAnim(){
   return{position:[],rotation:[],scale:[],color:[],metalness:[],roughness:[],opacity:[],emissive:[]};
@@ -787,10 +886,40 @@ function makeTexture(type,scale,color1,color2){
   return tex;
 }
 
-/* ============ ADD OBJECT ============ */
+/* ============ ADD OBJECT (с поддержкой camera) ============ */
 function addObject(type,opts={}){
   let obj;
-  if(type==='light'||type==='spotlight'){
+  if(type==='camera'){
+    obj=new THREE.PerspectiveCamera(50,16/9,0.1,1000);
+    obj.userData.type='camera';
+    const helper=new THREE.Group();
+    const body=new THREE.Mesh(
+      new THREE.BoxGeometry(0.6,0.4,0.8),
+      new THREE.MeshStandardMaterial({color:0x333333,metalness:0.5,roughness:0.4})
+    );
+    body.userData.isHelper=true;
+    const lens=new THREE.Mesh(
+      new THREE.CylinderGeometry(0.15,0.18,0.3,12),
+      new THREE.MeshStandardMaterial({color:0x111111,metalness:0.8,roughness:0.2})
+    );
+    lens.rotation.x=Math.PI/2;
+    lens.position.z=-0.5;
+    lens.userData.isHelper=true;
+    const cone=new THREE.Mesh(
+      new THREE.ConeGeometry(0.35,0.7,4),
+      new THREE.MeshBasicMaterial({color:0xff4444,wireframe:true})
+    );
+    cone.rotation.x=Math.PI/2;
+    cone.rotation.z=Math.PI/4;
+    cone.position.z=-0.9;
+    cone.userData.isHelper=true;
+    helper.add(body,lens,cone);
+    helper.userData.isHelper=true;
+    obj.add(helper);
+    obj.userData.helper=helper;
+    obj.position.set(0,3,6);
+    obj.lookAt(0,0,0);
+  }else if(type==='light'||type==='spotlight'){
     if(type==='light'){
       obj=new THREE.PointLight(0xffffff,2,0,2);
       obj.userData.type='light';
@@ -832,7 +961,7 @@ function addObject(type,opts={}){
   markDirty();
   return obj;
 }
-/* ============ DELETE ============ */
+  /* ============ DELETE ============ */
 function deleteObject(obj){
   if(!obj)return;
   transform.detach();
@@ -868,7 +997,13 @@ function selectObject(obj,add=false){
   }
   selected=selectedObjects.length>0?selectedObjects[selectedObjects.length-1]:null;
   transform.detach();
-  if(selectedObjects.length===1){
+  if(selectedObjects.length===1&&selected.userData.type!=='camera'){
+    if(['move','rotate','scale'].includes(currentTool)){
+      transform.attach(selectedObjects[0]);
+      transform.setMode(currentTool==='move'?'translate':currentTool==='rotate'?'rotate':'scale');
+    }
+  }else if(selectedObjects.length===1&&selected.userData.type==='camera'){
+    // Камеру тоже можно таскать
     if(['move','rotate','scale'].includes(currentTool)){
       transform.attach(selectedObjects[0]);
       transform.setMode(currentTool==='move'?'translate':currentTool==='rotate'?'rotate':'scale');
@@ -887,6 +1022,8 @@ function updateSelectionUI(){
   });
   const cnt=selectedObjects.length;
   document.getElementById('stSel').textContent=`${cnt}/${objects.length}`;
+  const btnLook=document.getElementById('btnLookThrough');
+  if(btnLook)btnLook.style.display='none';
   if(cnt===0){
     document.getElementById('selText').textContent='Nothing selected';
     document.getElementById('stSelName').textContent='';
@@ -914,6 +1051,9 @@ function updateSelectionUI(){
         document.getElementById('lAngleV').textContent=Math.round(o.angle*180/Math.PI)+'°';
       }
     }
+    if(o.userData.type==='camera'&&btnLook){
+      btnLook.style.display='block';
+    }
     syncPropsFromSelection();
   }else{
     document.getElementById('selText').textContent=`${cnt} objects selected`;
@@ -938,7 +1078,7 @@ function refreshOutliner(){
   el.innerHTML='';
   document.getElementById('stObj').textContent=objects.length;
   document.getElementById('objCountBadge').textContent=objects.length;
-  const icons={cube:'▢',sphere:'●',torus:'◎',cylinder:'⬭',cone:'▲',plane:'▭',icosahedron:'⬡',dodecahedron:'⬟',octahedron:'◆',tetrahedron:'▲',light:'💡',spotlight:'🔦',imported:'📦'};
+  const icons={cube:'▢',sphere:'●',torus:'◎',cylinder:'⬭',cone:'▲',plane:'▭',icosahedron:'⬡',dodecahedron:'⬟',octahedron:'◆',tetrahedron:'▲',light:'💡',spotlight:'🔦',camera:'🎥',imported:'📦'};
   objects.forEach(o=>{
     const row=document.createElement('div');
     row.className='out-row';
@@ -986,6 +1126,7 @@ document.querySelectorAll('.tool').forEach(btn=>{
     if(t==='del'){deleteSelected();return}
     if(t==='key'){openKeyModal();return}
     if(t==='focus'){focusSelected();return}
+    if(t==='video'){toggleVideoRecording();return}
     setTool(t);
   };
 });
@@ -1013,6 +1154,16 @@ function duplicateSelected(){
   if(selectedObjects.length===0)return;
   const newObjs=[];
   selectedObjects.forEach(src=>{
+    if(src.userData.type==='camera'){
+      // Камеру клонируем отдельно
+      const dup=addObject('camera');
+      dup.position.copy(src.position);
+      dup.rotation.copy(src.rotation);
+      dup.scale.copy(src.scale);
+      dup.userData.animations=JSON.parse(JSON.stringify(src.userData.animations));
+      newObjs.push(dup);
+      return;
+    }
     const dup=src.clone(true);
     if(src.isMesh){
       dup.geometry=src.geometry.clone();
@@ -1193,22 +1344,18 @@ document.getElementById('pFlat').onchange=e=>applyMaterialProp('flat',e.target.c
 
 /* ============ CUSTOM TEXTURE FROM PHOTO ============ */
 let currentCustomTexture=null;
-
 document.getElementById('btnLoadTexFromPC').addEventListener('click',()=>{
   if(selectedObjects.length===0){toast('Выбери объект','error');return}
   const input=document.createElement('input');
-  input.type='file';
-  input.accept='image/*';
+  input.type='file';input.accept='image/*';
   input.onchange=e=>{
-    const file=e.target.files[0];
-    if(!file)return;
+    const file=e.target.files[0];if(!file)return;
     const reader=new FileReader();
     reader.onload=ev=>loadTextureFromDataURL(ev.target.result,file.name);
     reader.readAsDataURL(file);
   };
   input.click();
 });
-
 document.getElementById('btnLoadTexFromURL').addEventListener('click',()=>{
   if(selectedObjects.length===0){toast('Выбери объект','error');return}
   const url=document.getElementById('texURLInput').value.trim();
@@ -1222,7 +1369,6 @@ document.getElementById('btnLoadTexFromURL').addEventListener('click',()=>{
     err=>{hideLoading();toast('CORS-ошибка. Скачай фото и загрузи через 📷','error');console.error(err);}
   );
 });
-
 function loadTextureFromDataURL(dataURL,name){
   const img=new Image();
   img.onload=()=>{
@@ -1230,10 +1376,9 @@ function loadTextureFromDataURL(dataURL,name){
     tex.needsUpdate=true;
     applyCustomTexture(tex,name);
   };
-  img.onerror=()=>toast('Ошибка чтения изображения','error');
+  img.onerror=()=>toast('Ошибка чтения','error');
   img.src=dataURL;
 }
-
 function applyCustomTexture(tex,name){
   if(selectedObjects.length===0)return;
   const fit=document.getElementById('pTexFit').value;
@@ -1242,7 +1387,6 @@ function applyCustomTexture(tex,name){
   const ox=parseFloat(document.getElementById('pTexOffsetX').value)||0;
   const oy=parseFloat(document.getElementById('pTexOffsetY').value)||0;
   const rot=parseFloat(document.getElementById('pTexRotation').value)||0;
-
   tex.colorSpace=THREE.SRGBColorSpace;
   tex.wrapS=tex.wrapT=(fit==='tile')?THREE.RepeatWrapping:THREE.ClampToEdgeWrapping;
   tex.repeat.set(fit==='tile'?rx:1,fit==='tile'?ry:1);
@@ -1251,7 +1395,6 @@ function applyCustomTexture(tex,name){
   tex.rotation=rot*Math.PI/180;
   tex.anisotropy=8;
   tex.needsUpdate=true;
-
   selectedObjects.forEach(o=>{
     if(!o.isMesh)return;
     if(o.material.map)o.material.map.dispose();
@@ -1260,10 +1403,7 @@ function applyCustomTexture(tex,name){
     o.material.color.setHex(0xffffff);
     o.material.needsUpdate=true;
   });
-
   currentCustomTexture={tex,name};
-
-  // Превью
   const preview=document.getElementById('tex-preview');
   if(preview&&tex.image){
     const c=document.createElement('canvas');
@@ -1272,14 +1412,10 @@ function applyCustomTexture(tex,name){
     ctx.drawImage(tex.image,0,0,128,128);
     preview.style.backgroundImage=`url(${c.toDataURL()})`;
   }
-
-  const preset=document.getElementById('pTexture');
-  if(preset)preset.value='none';
-
+  document.getElementById('pTexture').value='none';
   toast('Текстура: '+name,'success');
   markDirty();
 }
-
 ['pTexRepeatX','pTexRepeatY','pTexOffsetX','pTexOffsetY','pTexRotation','pTexFit'].forEach(id=>{
   const el=document.getElementById(id);
   if(!el)return;
@@ -1295,7 +1431,6 @@ function updateCustomTextureParams(){
   const oy=parseFloat(document.getElementById('pTexOffsetY').value)||0;
   const rot=parseFloat(document.getElementById('pTexRotation').value)||0;
   document.getElementById('pTexRotationV').textContent=rot+'°';
-
   selectedObjects.forEach(o=>{
     if(!o.isMesh||!o.material.map)return;
     const tex=o.material.map;
@@ -1308,7 +1443,6 @@ function updateCustomTextureParams(){
   });
   markDirty();
 }
-
 document.getElementById('btnClearTex').addEventListener('click',()=>{
   selectedObjects.forEach(o=>{
     if(!o.isMesh)return;
@@ -1404,7 +1538,7 @@ document.getElementById('lAngle').oninput=e=>{
   document.getElementById('lAngleV').textContent=Math.round(parseFloat(e.target.value))+'°';
 };
 
-/* ============ IMPORT ============ */
+/* ============ IMPORT MODELS ============ */
 function detectFormat(name){
   const ext=name.toLowerCase().split('.').pop();
   if(ext==='glb'||ext==='gltf')return 'gltf';
@@ -1507,33 +1641,214 @@ function addImported(root,name,animations){
   toast(`Импортировано: ${root.userData.name}`,'success');
 }
 
-/* Drag & Drop */
-let dragCounter=0;
-viewEl.addEventListener('dragenter',e=>{
-  e.preventDefault();
-  if(e.dataTransfer.types.includes('Files')){dragCounter++;viewEl.classList.add('dragover')}
-});
-viewEl.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy'});
-viewEl.addEventListener('dragleave',e=>{
-  dragCounter--;
-  if(dragCounter<=0){dragCounter=0;viewEl.classList.remove('dragover')}
-});
-viewEl.addEventListener('drop',async e=>{
-  e.preventDefault();
-  viewEl.classList.remove('dragover');
-  dragCounter=0;
-  const files=Array.from(e.dataTransfer.files);
-  const modelFiles=files.filter(f=>/\.(glb|gltf|obj|stl|fbx|json)$/i.test(f.name));
-  const imageFiles=files.filter(f=>/\.(png|jpg|jpeg|webp|gif|bmp)$/i.test(f.name));
-  for(const f of modelFiles)await importFile(f);
-  if(imageFiles.length>0){
-    if(selectedObjects.length===0){toast('Сначала выдели объект, потом кидай фото','warn');return}
-    const file=imageFiles[0];
-    const reader=new FileReader();
-    reader.onload=ev=>loadTextureFromDataURL(ev.target.result,file.name);
-    reader.readAsDataURL(file);
+/* ============ SCENE BACKGROUND (color + photo) ============ */
+let bgImageData=null;
+
+function applySceneBackground(){
+  const fit=document.getElementById('bgFit').value;
+  const blur=parseFloat(document.getElementById('bgBlur').value)||0;
+  const brightness=parseFloat(document.getElementById('bgBrightness').value)||1;
+  const baseColor=document.getElementById('bgColorPicker').value;
+  document.getElementById('bgBlurV').textContent=blur;
+  document.getElementById('bgBrightnessV').textContent=brightness.toFixed(2);
+
+  if(!bgImageData){
+    scene.background=new THREE.Color(baseColor);
+    return;
   }
+  // Рисуем картинку на canvas с учётом fit/blur/brightness
+  const img=bgImageData.img;
+  const canvas=document.createElement('canvas');
+  const W=1920,H=1080;
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle=baseColor;
+  ctx.fillRect(0,0,W,H);
+  ctx.filter=`blur(${blur}px) brightness(${brightness})`;
+  const iw=img.width,ih=img.height;
+  let dw,dh,dx,dy;
+  if(fit==='stretch'){
+    dw=W;dh=H;dx=0;dy=0;
+  }else if(fit==='contain'){
+    const s=Math.min(W/iw,H/ih);
+    dw=iw*s;dh=ih*s;
+    dx=(W-dw)/2;dy=(H-dh)/2;
+  }else{ // cover
+    const s=Math.max(W/iw,H/ih);
+    dw=iw*s;dh=ih*s;
+    dx=(W-dw)/2;dy=(H-dh)/2;
+  }
+  ctx.drawImage(img,dx,dy,dw,dh);
+  const tex=new THREE.CanvasTexture(canvas);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  tex.mapping=THREE.EquirectangularReflectionMapping;
+  scene.background=tex;
+  scene.backgroundIntensity=1;
+}
+
+document.getElementById('btnLoadBGImage').addEventListener('click',()=>{
+  const input=document.createElement('input');
+  input.type='file';input.accept='image/*';
+  input.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const r=new FileReader();
+    r.onload=ev=>loadBGFromDataURL(ev.target.result,file.name);
+    r.readAsDataURL(file);
+  };
+  input.click();
 });
+document.getElementById('btnLoadBGFromURL').addEventListener('click',()=>{
+  const url=document.getElementById('bgURLInput').value.trim();
+  if(!url){toast('Введи URL','error');return}
+  const img=new Image();
+  img.crossOrigin='anonymous';
+  showLoading('Загрузка фона…');
+  img.onload=()=>{
+    hideLoading();
+    bgImageData={img,name:'url'};
+    applySceneBackground();
+    const preview=document.getElementById('bg-preview');
+    preview.style.backgroundImage=`url(${url})`;
+    toast('Фон загружен');
+    markDirty();
+  };
+  img.onerror=()=>{hideLoading();toast('CORS-ошибка. Скачай фото','error')};
+  img.src=url;
+});
+function loadBGFromDataURL(dataURL,name){
+  const img=new Image();
+  img.onload=()=>{
+    bgImageData={img,name};
+    applySceneBackground();
+    document.getElementById('bg-preview').style.backgroundImage=`url(${dataURL})`;
+    toast('Фон: '+name,'success');
+    markDirty();
+  };
+  img.src=dataURL;
+}
+document.getElementById('bgColorPicker').addEventListener('input',()=>{
+  if(!bgImageData)applySceneBackground();
+  else applySceneBackground();
+  markDirty();
+});
+['bgBlur','bgBrightness','bgFit'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{
+    if(bgImageData)applySceneBackground();
+  });
+});
+document.getElementById('btnClearBGImage').addEventListener('click',()=>{
+  bgImageData=null;
+  applySceneBackground();
+  document.getElementById('bg-preview').style.backgroundImage='';
+  toast('Фон сброшен');
+});
+  /* ============ VIEW THROUGH SCENE CAMERA ============ */
+let activeSceneCamera=null;
+let savedViewState=null;
+const previewCamEl=document.getElementById('preview-cam');
+const previewCanvas=document.getElementById('previewCanvas');
+const previewRenderer=new THREE.WebGLRenderer({canvas:previewCanvas,antialias:true});
+previewRenderer.setPixelRatio(1);
+previewRenderer.setSize(480,270,false);
+previewRenderer.toneMapping=THREE.ACESFilmicToneMapping;
+previewRenderer.outputColorSpace=THREE.SRGBColorSpace;
+
+function lookThroughCamera(camObj){
+  if(!camObj||camObj.userData.type!=='camera')return;
+  activeSceneCamera=camObj;
+  orbit.enabled=false;
+  previewCamEl.classList.add('show');
+  document.getElementById('previewCamLabel').textContent=camObj.userData.name;
+  toast('Вид через '+camObj.userData.name+' (Esc — выйти)','success');
+}
+function exitCameraView(){
+  if(!activeSceneCamera)return;
+  activeSceneCamera=null;
+  orbit.enabled=true;
+  previewCamEl.classList.remove('show');
+  toast('Вышел из вида камеры');
+}
+document.getElementById('btnLookThrough')?.addEventListener('click',()=>{
+  if(selected&&selected.userData.type==='camera')lookThroughCamera(selected);
+});
+
+/* ============ VIDEO RECORDING ============ */
+let mediaRecorder=null;
+let recordedChunks=[];
+let isRecordingVideo=false;
+let recordingStream=null;
+
+function toggleVideoRecording(){
+  if(isRecordingVideo)stopVideoRecording();
+  else startVideoRecording();
+}
+
+async function startVideoRecording(){
+  if(isRecordingVideo){toast('Уже идёт запись','warn');return}
+  if(!('MediaRecorder' in window)){toast('MediaRecorder не поддерживается','error');return}
+  try{
+    const source=document.getElementById('videoSource').value;
+    const fps=parseInt(document.getElementById('videoFps').value)||30;
+    const bitrate=parseInt(document.getElementById('videoQuality').value)||5000000;
+
+    const canvasToRecord=(source==='camera'&&activeSceneCamera)?previewCanvas:renderer.domElement;
+
+    recordingStream=canvasToRecord.captureStream(fps);
+
+    const mimes=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
+    let mime='';
+    for(const m of mimes){if(MediaRecorder.isTypeSupported(m)){mime=m;break}}
+    if(!mime){toast('Видео-кодек не поддерживается','error');return}
+
+    mediaRecorder=new MediaRecorder(recordingStream,{mimeType:mime,videoBitsPerSecond:bitrate});
+    recordedChunks=[];
+
+    mediaRecorder.ondataavailable=e=>{
+      if(e.data&&e.data.size>0)recordedChunks.push(e.data);
+    };
+    mediaRecorder.onstop=()=>{
+      const blob=new Blob(recordedChunks,{type:mime});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      const ext=mime.includes('mp4')?'mp4':'webm';
+      a.href=url;
+      a.download='blender_video_'+Date.now()+'.'+ext;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),2000);
+      toast('Видео сохранено ('+ext+')','success');
+      isRecordingVideo=false;
+      previewCamEl.classList.remove('recording');
+      updateVideoRecUI();
+    };
+
+    mediaRecorder.start();
+    isRecordingVideo=true;
+    previewCamEl.classList.add('recording');
+    if(!anim.playing)togglePlay();
+    updateVideoRecUI();
+    toast('● Запись видео...','success');
+
+    const animDuration=((anim.end-anim.start)/anim.fps)*1000;
+    setTimeout(()=>{if(isRecordingVideo)stopVideoRecording();},Math.max(3000,animDuration+500));
+  }catch(err){
+    console.error(err);
+    toast('Ошибка записи: '+err.message,'error');
+  }
+}
+
+function stopVideoRecording(){
+  if(!isRecordingVideo||!mediaRecorder)return;
+  try{mediaRecorder.stop();}catch(e){}
+  if(anim.playing)togglePlay();
+}
+
+function updateVideoRecUI(){
+  const btn=document.getElementById('btnVideoTool');
+  if(!btn)return;
+  if(isRecordingVideo){btn.classList.add('on');btn.textContent='⏹';}
+  else{btn.classList.remove('on');btn.textContent='🎥';}
+}
+
 /* ============ ANIMATION SYSTEM ============ */
 const anim={current:1,start:1,end:120,fps:24,playing:false,lastTime:0,acc:0,interpolation:'smooth'};
 let recording=false;
@@ -1636,9 +1951,7 @@ function autoRecordChannel(ch){
 function updateAnimInfo(){
   let totalKeys=0;
   objects.forEach(o=>{
-    if(o.userData.animations){
-      Object.values(o.userData.animations).forEach(arr=>totalKeys+=arr.length);
-    }
+    if(o.userData.animations)Object.values(o.userData.animations).forEach(arr=>totalKeys+=arr.length);
   });
   document.getElementById('stKeys').textContent=totalKeys;
   if(selectedObjects.length!==1){
@@ -1670,9 +1983,7 @@ function rebuildAnim(){
   const step=total<=60?5:total<=200?10:25;
   for(let f=anim.start;f<=anim.end;f+=step){
     const t=document.createElement('div');
-    t.className='tick';
-    t.style.left=f2x(f)+'px';
-    t.textContent=f;
+    t.className='tick';t.style.left=f2x(f)+'px';t.textContent=f;
     ruler.appendChild(t);
   }
   const chanNames={position:'Location',rotation:'Rotation',scale:'Scale',color:'Color',metalness:'Metallic',roughness:'Roughness',opacity:'Opacity',emissive:'Emissive'};
@@ -1743,8 +2054,7 @@ function updatePlayhead(){
 }
 function togglePlay(){
   anim.playing=!anim.playing;
-  anim.lastTime=0;
-  anim.acc=0;
+  anim.lastTime=0;anim.acc=0;
   const btn=document.getElementById('btnPlay');
   btn.textContent=anim.playing?'⏸':'▶';
   btn.classList.toggle('playing',anim.playing);
@@ -1769,16 +2079,14 @@ fFrameEl.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
     e.preventDefault();
     const v=parseInt(e.target.value);
-    if(!isNaN(v))setFrame(v);
-    else e.target.value=anim.current;
+    if(!isNaN(v))setFrame(v);else e.target.value=anim.current;
     e.target.blur();
   }
   if(e.key==='Escape'){e.target.value=anim.current;e.target.blur()}
 });
 fFrameEl.addEventListener('change',e=>{
   const v=parseInt(e.target.value);
-  if(!isNaN(v))setFrame(v);
-  else e.target.value=anim.current;
+  if(!isNaN(v))setFrame(v);else e.target.value=anim.current;
 });
 document.getElementById('fStart').onchange=e=>{
   const v=parseInt(e.target.value);
@@ -1857,10 +2165,11 @@ function deleteKeyAtFrame(){
 /* ============ SAVE/LOAD ============ */
 function serialize(){
   return{
-    version:'4.0',
+    version:'5.0',
     name:document.getElementById('fname').textContent,
     anim:{current:anim.current,start:anim.start,end:anim.end,fps:anim.fps},
     camera:{pos:camera.position.toArray(),target:orbit.target.toArray()},
+    sceneBackground:bgImageData?{dataURL:'',fit:document.getElementById('bgFit').value,blur:parseFloat(document.getElementById('bgBlur').value),brightness:parseFloat(document.getElementById('bgBrightness').value),color:document.getElementById('bgColorPicker').value}:{color:document.getElementById('bgColorPicker').value},
     objects:objects.map(o=>({
       type:o.userData.type,
       name:o.userData.name,
@@ -1879,7 +2188,7 @@ function serialize(){
       receiveShadow:o.isMesh?o.receiveShadow:false,
       lightIntensity:o.isLight?o.intensity:undefined,
       lightColor:o.isLight?o.color.getHex():undefined,
-      animations:JSON.parse(JSON.stringify(o.userData.animations||{}))
+      anim:JSON.parse(JSON.stringify(o.userData.animations||{}))
     }))
   };
 }
@@ -1892,9 +2201,7 @@ function applyData(data){
       else o.material.dispose();
     }
   });
-  objects.length=0;
-  selectedObjects.length=0;
-  selected=null;
+  objects.length=0;selectedObjects.length=0;selected=null;
   Object.keys(counters).forEach(k=>delete counters[k]);
   if(data.anim){
     anim.current=data.anim.current||1;
@@ -1917,11 +2224,9 @@ function applyData(data){
   (data.objects||[]).forEach(od=>{
     const type=od.type;
     let obj;
-    if(type==='light'||type==='spotlight'){
-      obj=addObject(type);
-    }else{
-      obj=addObject(type,{color:od.color});
-    }
+    if(type==='camera')obj=addObject('camera');
+    else if(type==='light'||type==='spotlight')obj=addObject(type);
+    else obj=addObject(type,{color:od.color});
     obj.userData.name=od.name;
     obj.position.fromArray(od.pos);
     obj.rotation.set(od.rot[0],od.rot[1],od.rot[2]);
@@ -1941,10 +2246,9 @@ function applyData(data){
       if(od.lightColor!==undefined)obj.color.setHex(od.lightColor);
     }
     obj.visible=od.visible!==false;
-    if(od.animations)obj.userData.animations=od.animations;
+    if(od.anim)obj.userData.animations=od.anim;
   });
-  selectObject(null);
-  refreshOutliner();rebuildAnim();
+  selectObject(null);refreshOutliner();rebuildAnim();
   document.getElementById('fFrame').value=anim.current;
   document.getElementById('curFrame').textContent=anim.current;
   document.getElementById('stFrame').textContent=anim.current;
@@ -1965,8 +2269,7 @@ function openScene(){
   const input=document.createElement('input');
   input.type='file';input.accept='.json,.blend.json';
   input.onchange=e=>{
-    const f=e.target.files[0];
-    if(!f)return;
+    const f=e.target.files[0];if(!f)return;
     const r=new FileReader();
     r.onload=ev=>{
       try{
@@ -1981,7 +2284,13 @@ function openScene(){
   input.click();
 }
 function renderPNG(){
-  renderer.render(scene,camera);
+  if(activeSceneCamera){
+    activeSceneCamera.aspect=camera.aspect;
+    activeSceneCamera.updateProjectionMatrix();
+    renderer.render(scene,activeSceneCamera);
+  }else{
+    renderer.render(scene,camera);
+  }
   const url=renderer.domElement.toDataURL('image/png');
   const a=document.createElement('a');
   a.href=url;a.download='render_'+Date.now()+'.png';a.click();
@@ -2004,13 +2313,11 @@ function newScene(){
   document.getElementById('fEnd').value=120;
   document.getElementById('fFps').value=24;
   document.getElementById('fname').textContent='Untitled';
-  addObject('cube');
-  selectObject(null);
+  addObject('cube');selectObject(null);
   document.getElementById('fFrame').value=1;
   document.getElementById('curFrame').textContent=1;
   document.getElementById('stFrame').textContent=1;
-  applyAnim(1);
-  clearDirty();toast('New scene');
+  applyAnim(1);clearDirty();toast('New scene');
 }
 
 /* ============ MENU ============ */
@@ -2043,6 +2350,8 @@ function doAction(a){
     case'import-model':importModel();break;
     case'save':saveScene();break;
     case'render':renderPNG();break;
+    case'video-rec':toggleVideoRecording();break;
+    case'video-from-cam':document.getElementById('videoSource').value='camera';toggleVideoRecording();break;
     case'duplicate':duplicateSelected();break;
     case'delete':deleteSelected();break;
     case'select-all':selectAll();break;
@@ -2132,9 +2441,7 @@ window.addEventListener('mouseup',e=>{
       const box=new THREE.Box3().setFromObject(o);
       const center=box.getCenter(new THREE.Vector3());
       const ndc=center.clone().project(camera);
-      if(ndc.x>=minX&&ndc.x<=maxX&&ndc.y>=minY&&ndc.y<=maxY){
-        newSel.push(o);
-      }
+      if(ndc.x>=minX&&ndc.x<=maxX&&ndc.y>=minY&&ndc.y<=maxY)newSel.push(o);
     });
     selectedObjects.length=0;
     newSel.forEach(o=>selectedObjects.push(o));
@@ -2168,7 +2475,6 @@ window.addEventListener('keydown',e=>{
   const tag=e.target.tagName;
   if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
   const k=e.key.toLowerCase();
-
   if(e.ctrlKey||e.metaKey){
     if(k==='s'){e.preventDefault();saveScene();return}
     if(k==='o'){e.preventDefault();openScene();return}
@@ -2176,10 +2482,12 @@ window.addEventListener('keydown',e=>{
     if(k==='c'){e.preventDefault();copyKeyframe();return}
     if(k==='v'){e.preventDefault();pasteKeyframe();return}
     if(k==='a'){e.preventDefault();selectAll();return}
+    if(k==='r'){e.preventDefault();toggleVideoRecording();return}
     return;
   }
   if(e.altKey&&k==='a'){e.preventDefault();deselectAll();return}
   if(k==='escape'){
+    if(activeSceneCamera){exitCameraView();return}
     keyModal.classList.remove('open');
     addModal.classList.remove('open');
     transform.detach();
@@ -2189,11 +2497,10 @@ window.addEventListener('keydown',e=>{
   }
   if(e.shiftKey&&k==='a'){e.preventDefault();openAddModal();return}
   if(e.shiftKey&&k==='d'){duplicateSelected();return}
-
   switch(k){
     case'w':setTool('select');break;
     case'g':if(selectedObjects.length>0)setTool('move');break;
-    case'r':if(selectedObjects.length>0)setTool('rotate');break;
+    case'r':if(selectedObjects.length>0&&!e.ctrlKey)setTool('rotate');break;
     case's':if(selectedObjects.length>0)setTool('scale');break;
     case'x':deleteSelected();break;
     case'i':openKeyModal();break;
@@ -2238,8 +2545,7 @@ function animate(){
     const now=performance.now();
     if(anim.lastTime===0)anim.lastTime=now;
     const dt=(now-anim.lastTime)/1000;
-    anim.lastTime=now;
-    anim.acc+=dt;
+    anim.lastTime=now;anim.acc+=dt;
     if(anim.acc>0.5)anim.acc=0;
     const fd=1/anim.fps;
     while(anim.acc>=fd){
@@ -2253,15 +2559,25 @@ function animate(){
       document.getElementById('stFrame').textContent=f;
       applyAnim(f);updatePlayhead();updateAnimInfo();
     }
-  }else{
-    anim.lastTime=0;
-  }
+  }else{anim.lastTime=0}
   updateOutline();
-  renderer.render(scene,camera);
+  // Основной рендер
+  if(activeSceneCamera){
+    activeSceneCamera.aspect=camera.aspect;
+    activeSceneCamera.updateProjectionMatrix();
+    renderer.render(scene,activeSceneCamera);
+  }else{
+    renderer.render(scene,camera);
+  }
+  // Превью-рендер камеры (маленькое окошко)
+  if(activeSceneCamera){
+    previewRenderer.render(scene,activeSceneCamera);
+  }else if(selected&&selected.userData.type==='camera'){
+    previewRenderer.render(scene,selected);
+  }
   frames++;
   const now=performance.now();
-  fpsTime+=now-lastTime;
-  lastTime=now;
+  fpsTime+=now-lastTime;lastTime=now;
   if(fpsTime>400){
     document.getElementById('stFps').textContent=Math.round(frames/(fpsTime/1000));
     frames=0;fpsTime=0;
@@ -2269,10 +2585,13 @@ function animate(){
 }
 animate();
 
-console.log('%cBlender Web — готово!','color:#e87d0d;font-size:22px;font-weight:800');
-console.log('%c📷 Фото-текстура: Material tab → Photo Texture → Загрузить фото','color:#6ab04c');
-console.log('%c📦 Импорт моделей: File → Import Model или drag&drop .glb/.obj/.stl/.fbx','color:#6ab04c');
-console.log('%c🎯 Мультивыделение: Shift+клик · Ctrl+A · Shift+Alt+drag рамка','color:#6ab04c');
+console.log('%cBlender Web v5 — с камерой и видео','color:#e87d0d;font-size:22px;font-weight:800');
+console.log('%c🎥 Add → Camera · кнопка "Смотреть через камеру" в Object tab','color:#6ab04c');
+console.log('%c🎬 Ctrl+R или кнопка 🎥 в тулбаре — запись видео (WebM)','color:#6ab04c');
+console.log('%c🌄 Scene tab — цвет фона или фото-фон с blur/brightness','color:#6ab04c');
+console.log('%c📷 Material → Photo Texture — свои фото как текстура','color:#6ab04c');
+console.log('%c📦 File → Import Model или drag&drop .glb/.obj/.stl/.fbx','color:#6ab04c');
+console.log('%c🎯 Shift+клик / Ctrl+A / Shift+Alt+drag — мультивыделение','color:#6ab04c');
 </script>
 </body>
 </html>
