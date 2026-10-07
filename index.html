@@ -48,8 +48,8 @@ input,select{font-family:inherit}
 #sel-box{position:absolute;border:1px solid var(--ac);background:rgba(232,125,13,.15);display:none;pointer-events:none;z-index:20}
 #preview-cam{position:absolute;bottom:130px;right:10px;width:240px;height:135px;background:#000;border:2px solid var(--ac);border-radius:6px;display:none;z-index:8;box-shadow:0 8px 24px rgba(0,0,0,.7)}
 #preview-cam.show{display:block}
-#preview-cam .label{position:absolute;top:4px;left:8px;color:#fff;font-size:10px;background:rgba(0,0,0,.6);padding:2px 6px;border-radius:3px;pointer-events:none}
-#preview-cam .rec-dot{position:absolute;top:6px;right:8px;width:10px;height:10px;background:var(--red);border-radius:50%;display:none;animation:pulse 1s infinite}
+#preview-cam .label{position:absolute;top:4px;left:8px;color:#fff;font-size:10px;background:rgba(0,0,0,.6);padding:2px 6px;border-radius:3px;pointer-events:none;z-index:2}
+#preview-cam .rec-dot{position:absolute;top:6px;right:8px;width:10px;height:10px;background:var(--red);border-radius:50%;display:none;animation:pulse 1s infinite;z-index:2}
 #preview-cam.recording .rec-dot{display:block}
 #right{grid-area:right;background:var(--bg2);display:flex;flex-direction:column;overflow:hidden}
 .panel-head{background:var(--bg3);padding:5px 10px;font-size:10px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;cursor:pointer;min-height:22px}
@@ -220,7 +220,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div class="mode" id="modeText">OBJECT MODE</div>
       <div id="selText" style="color:#aaa;">Nothing selected</div>
     </div>
-    <div class="vp-info" id="info-bl">LMB Select · Shift+LMB Add · RMB Rotate · Wheel Zoom · Drag&Drop</div>
+    <div class="vp-info" id="info-bl">LMB Select · Shift+LMB Add · RMB Rotate · Wheel Zoom · Drag&Drop Files</div>
     <div class="vp-info" id="info-br">—</div>
     <div id="tools">
       <button class="tool active" data-tool="select" title="Select (W)">↖</button>
@@ -264,6 +264,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
           <label class="check-row"><input type="checkbox" id="pCastShadow" checked> Cast shadow</label>
           <label class="check-row"><input type="checkbox" id="pReceiveShadow" checked> Receive shadow</label>
           <button class="btn-sm primary" id="btnLookThrough" style="display:none;width:100%;margin-top:6px;">👁 Смотреть через камеру</button>
+          <button class="btn-sm" id="btnPlayEmbeddedAnim" style="display:none;width:100%;margin-top:6px;">🎬 Играть встроенную анимацию</button>
+          <button class="btn-sm" id="btnStopEmbeddedAnim" style="display:none;width:100%;margin-top:4px;">⏹ Остановить</button>
         </div></div>
         <div class="grp"><div class="grp-h">Actions</div><div class="grp-b">
           <div class="btn-row">
@@ -391,9 +393,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
           </div></div>
           <div class="row"><span class="lbl">Fit</span><div class="fields">
             <div class="ifield" style="flex:1;"><select id="bgFit">
-              <option value="cover">Cover (заполнить)</option>
-              <option value="contain">Contain (вписать)</option>
-              <option value="stretch">Stretch (растянуть)</option>
+              <option value="cover">Cover</option>
+              <option value="contain">Contain</option>
+              <option value="stretch">Stretch</option>
             </select></div>
           </div></div>
           <div class="row"><span class="lbl">Blur</span><div class="fields">
@@ -740,7 +742,6 @@ function updateOutline(){
       line.renderOrder=999;
       outlineGroup.add(line);
     }else{
-      // Для камер/групп — просто бокс
       sel.traverse(child=>{
         if(child.isMesh&&!child.userData.isHelper){
           const edges=new THREE.EdgesGeometry(child.geometry,20);
@@ -886,7 +887,7 @@ function makeTexture(type,scale,color1,color2){
   return tex;
 }
 
-/* ============ ADD OBJECT (с поддержкой camera) ============ */
+/* ============ ADD OBJECT ============ */
 function addObject(type,opts={}){
   let obj;
   if(type==='camera'){
@@ -964,6 +965,7 @@ function addObject(type,opts={}){
   /* ============ DELETE ============ */
 function deleteObject(obj){
   if(!obj)return;
+  if(obj.userData.mixer){obj.userData.mixer.stopAllAction();obj.userData.mixer=null;}
   transform.detach();
   scene.remove(obj);
   if(obj.geometry)obj.geometry.dispose();
@@ -997,13 +999,7 @@ function selectObject(obj,add=false){
   }
   selected=selectedObjects.length>0?selectedObjects[selectedObjects.length-1]:null;
   transform.detach();
-  if(selectedObjects.length===1&&selected.userData.type!=='camera'){
-    if(['move','rotate','scale'].includes(currentTool)){
-      transform.attach(selectedObjects[0]);
-      transform.setMode(currentTool==='move'?'translate':currentTool==='rotate'?'rotate':'scale');
-    }
-  }else if(selectedObjects.length===1&&selected.userData.type==='camera'){
-    // Камеру тоже можно таскать
+  if(selectedObjects.length===1){
     if(['move','rotate','scale'].includes(currentTool)){
       transform.attach(selectedObjects[0]);
       transform.setMode(currentTool==='move'?'translate':currentTool==='rotate'?'rotate':'scale');
@@ -1023,7 +1019,11 @@ function updateSelectionUI(){
   const cnt=selectedObjects.length;
   document.getElementById('stSel').textContent=`${cnt}/${objects.length}`;
   const btnLook=document.getElementById('btnLookThrough');
+  const btnPlayE=document.getElementById('btnPlayEmbeddedAnim');
+  const btnStopE=document.getElementById('btnStopEmbeddedAnim');
   if(btnLook)btnLook.style.display='none';
+  if(btnPlayE)btnPlayE.style.display='none';
+  if(btnStopE)btnStopE.style.display='none';
   if(cnt===0){
     document.getElementById('selText').textContent='Nothing selected';
     document.getElementById('stSelName').textContent='';
@@ -1053,6 +1053,11 @@ function updateSelectionUI(){
     }
     if(o.userData.type==='camera'&&btnLook){
       btnLook.style.display='block';
+    }
+    // Встроенные анимации — показываем кнопки
+    if(o.userData.sourceAnimations&&o.userData.sourceAnimations.length>0){
+      if(btnPlayE)btnPlayE.style.display='block';
+      if(btnStopE)btnStopE.style.display='block';
     }
     syncPropsFromSelection();
   }else{
@@ -1155,12 +1160,10 @@ function duplicateSelected(){
   const newObjs=[];
   selectedObjects.forEach(src=>{
     if(src.userData.type==='camera'){
-      // Камеру клонируем отдельно
       const dup=addObject('camera');
       dup.position.copy(src.position);
       dup.rotation.copy(src.rotation);
       dup.scale.copy(src.scale);
-      dup.userData.animations=JSON.parse(JSON.stringify(src.userData.animations));
       newObjs.push(dup);
       return;
     }
@@ -1538,7 +1541,7 @@ document.getElementById('lAngle').oninput=e=>{
   document.getElementById('lAngleV').textContent=Math.round(parseFloat(e.target.value))+'°';
 };
 
-/* ============ IMPORT MODELS ============ */
+/* ============ IMPORT MODELS (С АНИМАЦИЯМИ) ============ */
 function detectFormat(name){
   const ext=name.toLowerCase().split('.').pop();
   if(ext==='glb'||ext==='gltf')return 'gltf';
@@ -1636,12 +1639,49 @@ function addImported(root,name,animations){
   root.userData.name=`${baseName}.${String(counters[baseName]).padStart(3,'0')}`;
   root.userData.animations=emptyAnim();
   root.userData.imported=true;
-  if(animations&&animations.length>0)root.userData.sourceAnimations=animations;
+  // ⭐ Встроенные анимации из GLB/FBX
+  if(animations&&animations.length>0){
+    root.userData.sourceAnimations=animations;
+    root.userData.mixer=new THREE.AnimationMixer(root);
+    root.userData.mixerActions=[];
+    animations.forEach(clip=>{
+      const action=root.userData.mixer.clipAction(clip);
+      action.loop=THREE.LoopRepeat;
+      action.clampWhenFinished=true;
+      root.userData.mixerActions.push(action);
+    });
+    root.userData.mixerActions.forEach(a=>a.play());
+    root.userData.autoAnim=true;
+    toast(`Импортировано: ${root.userData.name} · ${animations.length} анимаций`,'success');
+  }else{
+    toast(`Импортировано: ${root.userData.name}`,'success');
+  }
   scene.add(root);objects.push(root);selectObject(root);refreshOutliner();markDirty();
-  toast(`Импортировано: ${root.userData.name}`,'success');
 }
 
-/* ============ SCENE BACKGROUND (color + photo) ============ */
+/* ============ Кнопки встроенной анимации ============ */
+document.getElementById('btnPlayEmbeddedAnim')?.addEventListener('click',()=>{
+  if(!selected)return;
+  if(selected.userData.mixer){
+    selected.userData.autoAnim=true;
+    selected.userData.mixerActions.forEach(a=>a.reset().play());
+    if(!anim.playing)togglePlay();
+    toast('Встроенная анимация запущена','success');
+  }else{
+    toast('У этого объекта нет встроенной анимации','warn');
+  }
+});
+document.getElementById('btnStopEmbeddedAnim')?.addEventListener('click',()=>{
+  if(!selected)return;
+  if(selected.userData.mixer){
+    selected.userData.mixerActions.forEach(a=>a.stop());
+    selected.userData.autoAnim=false;
+    if(anim.playing)togglePlay();
+    toast('Встроенная анимация остановлена');
+  }
+});
+
+/* ============ SCENE BACKGROUND ============ */
 let bgImageData=null;
 
 function applySceneBackground(){
@@ -1651,12 +1691,10 @@ function applySceneBackground(){
   const baseColor=document.getElementById('bgColorPicker').value;
   document.getElementById('bgBlurV').textContent=blur;
   document.getElementById('bgBrightnessV').textContent=brightness.toFixed(2);
-
   if(!bgImageData){
     scene.background=new THREE.Color(baseColor);
     return;
   }
-  // Рисуем картинку на canvas с учётом fit/blur/brightness
   const img=bgImageData.img;
   const canvas=document.createElement('canvas');
   const W=1920,H=1080;
@@ -1673,7 +1711,7 @@ function applySceneBackground(){
     const s=Math.min(W/iw,H/ih);
     dw=iw*s;dh=ih*s;
     dx=(W-dw)/2;dy=(H-dh)/2;
-  }else{ // cover
+  }else{
     const s=Math.max(W/iw,H/ih);
     dw=iw*s;dh=ih*s;
     dx=(W-dw)/2;dy=(H-dh)/2;
@@ -1707,8 +1745,7 @@ document.getElementById('btnLoadBGFromURL').addEventListener('click',()=>{
     hideLoading();
     bgImageData={img,name:'url'};
     applySceneBackground();
-    const preview=document.getElementById('bg-preview');
-    preview.style.backgroundImage=`url(${url})`;
+    document.getElementById('bg-preview').style.backgroundImage=`url(${url})`;
     toast('Фон загружен');
     markDirty();
   };
@@ -1727,8 +1764,7 @@ function loadBGFromDataURL(dataURL,name){
   img.src=dataURL;
 }
 document.getElementById('bgColorPicker').addEventListener('input',()=>{
-  if(!bgImageData)applySceneBackground();
-  else applySceneBackground();
+  applySceneBackground();
   markDirty();
 });
 ['bgBlur','bgBrightness','bgFit'].forEach(id=>{
@@ -1744,7 +1780,6 @@ document.getElementById('btnClearBGImage').addEventListener('click',()=>{
 });
   /* ============ VIEW THROUGH SCENE CAMERA ============ */
 let activeSceneCamera=null;
-let savedViewState=null;
 const previewCamEl=document.getElementById('preview-cam');
 const previewCanvas=document.getElementById('previewCanvas');
 const previewRenderer=new THREE.WebGLRenderer({canvas:previewCanvas,antialias:true});
@@ -1790,19 +1825,14 @@ async function startVideoRecording(){
     const source=document.getElementById('videoSource').value;
     const fps=parseInt(document.getElementById('videoFps').value)||30;
     const bitrate=parseInt(document.getElementById('videoQuality').value)||5000000;
-
     const canvasToRecord=(source==='camera'&&activeSceneCamera)?previewCanvas:renderer.domElement;
-
     recordingStream=canvasToRecord.captureStream(fps);
-
     const mimes=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
     let mime='';
     for(const m of mimes){if(MediaRecorder.isTypeSupported(m)){mime=m;break}}
     if(!mime){toast('Видео-кодек не поддерживается','error');return}
-
     mediaRecorder=new MediaRecorder(recordingStream,{mimeType:mime,videoBitsPerSecond:bitrate});
     recordedChunks=[];
-
     mediaRecorder.ondataavailable=e=>{
       if(e.data&&e.data.size>0)recordedChunks.push(e.data);
     };
@@ -1820,14 +1850,12 @@ async function startVideoRecording(){
       previewCamEl.classList.remove('recording');
       updateVideoRecUI();
     };
-
     mediaRecorder.start();
     isRecordingVideo=true;
     previewCamEl.classList.add('recording');
     if(!anim.playing)togglePlay();
     updateVideoRecUI();
     toast('● Запись видео...','success');
-
     const animDuration=((anim.end-anim.start)/anim.fps)*1000;
     setTimeout(()=>{if(isRecordingVideo)stopVideoRecording();},Math.max(3000,animDuration+500));
   }catch(err){
@@ -1883,6 +1911,13 @@ function applyAnim(frame){
       const ro=sample(a.roughness,frame);if(ro)o.material.roughness=ro[0];
       const op=sample(a.opacity,frame);if(op){o.material.opacity=op[0];o.material.transparent=op[0]<1}
       const em=sample(a.emissive,frame);if(em)o.material.emissiveIntensity=em[0];
+    }
+  });
+  // Встроенные анимации импортированных моделей — синхронизация с кадром
+  objects.forEach(o=>{
+    if(o.userData.mixer&&o.userData.autoAnim&&!anim.playing){
+      const t=((anim.current-anim.start)/anim.fps);
+      try{o.userData.mixer.setTime(t%10);}catch(e){}
     }
   });
   updateOutline();
@@ -2169,7 +2204,6 @@ function serialize(){
     name:document.getElementById('fname').textContent,
     anim:{current:anim.current,start:anim.start,end:anim.end,fps:anim.fps},
     camera:{pos:camera.position.toArray(),target:orbit.target.toArray()},
-    sceneBackground:bgImageData?{dataURL:'',fit:document.getElementById('bgFit').value,blur:parseFloat(document.getElementById('bgBlur').value),brightness:parseFloat(document.getElementById('bgBrightness').value),color:document.getElementById('bgColorPicker').value}:{color:document.getElementById('bgColorPicker').value},
     objects:objects.map(o=>({
       type:o.userData.type,
       name:o.userData.name,
@@ -2541,11 +2575,23 @@ clearDirty();
 let lastTime=performance.now(),frames=0,fpsTime=0;
 function animate(){
   requestAnimationFrame(animate);
+  const now=performance.now();
+  const dt=(now-lastTime)/1000;
+  
+  // Обновляем встроенные анимации импортированных моделей
+  objects.forEach(o=>{
+    if(o.userData.mixer&&o.userData.autoAnim){
+      if(anim.playing){
+        o.userData.mixer.update(dt);
+      }
+    }
+  });
+  
   if(anim.playing){
-    const now=performance.now();
     if(anim.lastTime===0)anim.lastTime=now;
-    const dt=(now-anim.lastTime)/1000;
-    anim.lastTime=now;anim.acc+=dt;
+    const d=(now-anim.lastTime)/1000;
+    anim.lastTime=now;
+    anim.acc+=d;
     if(anim.acc>0.5)anim.acc=0;
     const fd=1/anim.fps;
     while(anim.acc>=fd){
@@ -2557,10 +2603,16 @@ function animate(){
       if(document.activeElement!==fFrame)fFrame.value=f;
       document.getElementById('curFrame').textContent=f;
       document.getElementById('stFrame').textContent=f;
-      applyAnim(f);updatePlayhead();updateAnimInfo();
+      applyAnim(f);
+      updatePlayhead();
+      updateAnimInfo();
     }
-  }else{anim.lastTime=0}
+  }else{
+    anim.lastTime=0;
+  }
+  
   updateOutline();
+  
   // Основной рендер
   if(activeSceneCamera){
     activeSceneCamera.aspect=camera.aspect;
@@ -2569,15 +2621,17 @@ function animate(){
   }else{
     renderer.render(scene,camera);
   }
-  // Превью-рендер камеры (маленькое окошко)
+  
+  // Превью камеры
   if(activeSceneCamera){
     previewRenderer.render(scene,activeSceneCamera);
   }else if(selected&&selected.userData.type==='camera'){
     previewRenderer.render(scene,selected);
   }
+  
   frames++;
-  const now=performance.now();
-  fpsTime+=now-lastTime;lastTime=now;
+  fpsTime+=now-lastTime;
+  lastTime=now;
   if(fpsTime>400){
     document.getElementById('stFps').textContent=Math.round(frames/(fpsTime/1000));
     frames=0;fpsTime=0;
@@ -2585,13 +2639,13 @@ function animate(){
 }
 animate();
 
-console.log('%cBlender Web v5 — с камерой и видео','color:#e87d0d;font-size:22px;font-weight:800');
-console.log('%c🎥 Add → Camera · кнопка "Смотреть через камеру" в Object tab','color:#6ab04c');
-console.log('%c🎬 Ctrl+R или кнопка 🎥 в тулбаре — запись видео (WebM)','color:#6ab04c');
-console.log('%c🌄 Scene tab — цвет фона или фото-фон с blur/brightness','color:#6ab04c');
-console.log('%c📷 Material → Photo Texture — свои фото как текстура','color:#6ab04c');
-console.log('%c📦 File → Import Model или drag&drop .glb/.obj/.stl/.fbx','color:#6ab04c');
-console.log('%c🎯 Shift+клик / Ctrl+A / Shift+Alt+drag — мультивыделение','color:#6ab04c');
+console.log('%cBlender Web v5 — с анимациями из моделей','color:#e87d0d;font-size:22px;font-weight:800');
+console.log('%c📦 Импорт: .glb/.gltf/.obj/.stl/.fbx — встроенные анимации подхватываются','color:#6ab04c');
+console.log('%c🎬 Кнопки "Играть встроенную анимацию" в Object tab','color:#6ab04c');
+console.log('%c🎥 Камера: Add → Camera · кнопка "Смотреть через камеру"','color:#6ab04c');
+console.log('%c🎬 Видео: Ctrl+R или 🎥 в тулбаре','color:#6ab04c');
+console.log('%c🌄 Фон: Scene tab — цвет или фото','color:#6ab04c');
+console.log('%c📷 Текстуры: Material → Photo Texture','color:#6ab04c');
 </script>
 </body>
 </html>
