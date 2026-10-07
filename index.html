@@ -2200,34 +2200,83 @@ function deleteKeyAtFrame(){
 /* ============ SAVE/LOAD ============ */
 function serialize(){
   return{
-    version:'5.0',
+    version:'5.1',
     name:document.getElementById('fname').textContent,
     anim:{current:anim.current,start:anim.start,end:anim.end,fps:anim.fps},
     camera:{pos:camera.position.toArray(),target:orbit.target.toArray()},
-    objects:objects.map(o=>({
-      type:o.userData.type,
-      name:o.userData.name,
-      pos:o.position.toArray(),
-      rot:[o.rotation.x,o.rotation.y,o.rotation.z],
-      scl:o.scale.toArray(),
-      color:o.isMesh?o.material.color.getHex():0,
-      metal:o.isMesh?o.material.metalness:0,
-      rough:o.isMesh?o.material.roughness:0,
-      opacity:o.isMesh?o.material.opacity:1,
-      emissive:o.isMesh?o.material.emissiveIntensity:0,
-      emissiveColor:o.isMesh?o.material.emissive.getHex():0,
-      wireframe:o.isMesh?o.material.wireframe:false,
-      visible:o.visible,
-      castShadow:o.isMesh?o.castShadow:false,
-      receiveShadow:o.isMesh?o.receiveShadow:false,
-      lightIntensity:o.isLight?o.intensity:undefined,
-      lightColor:o.isLight?o.color.getHex():undefined,
-      anim:JSON.parse(JSON.stringify(o.userData.animations||{}))
-    }))
+    bgConfig:bgImageData?{
+      fit:document.getElementById('bgFit').value,
+      blur:parseFloat(document.getElementById('bgBlur').value),
+      brightness:parseFloat(document.getElementById('bgBrightness').value),
+      color:document.getElementById('bgColorPicker').value,
+      dataURL:bgImageData.img.src.startsWith('data:')?bgImageData.img.src:null,
+      url:!bgImageData.img.src.startsWith('data:')?bgImageData.img.src:null
+    }:{
+      color:document.getElementById('bgColorPicker').value
+    },
+    objects:objects.map(o=>{
+      const base={
+        type:o.userData.type,
+        name:o.userData.name,
+        pos:o.position.toArray(),
+        rot:[o.rotation.x,o.rotation.y,o.rotation.z],
+        scl:o.scale.toArray(),
+        visible:o.visible,
+        animations:JSON.parse(JSON.stringify(o.userData.animations||{}))
+      };
+      // Для меша — материал
+      if(o.isMesh){
+        base.color=o.material.color.getHex();
+        base.metal=o.material.metalness;
+        base.rough=o.material.roughness;
+        base.opacity=o.material.opacity;
+        base.emissive=o.material.emissiveIntensity||0;
+        base.emissiveColor=o.material.emissive.getHex();
+        base.wireframe=o.material.wireframe;
+        base.flatShading=!!o.material.flatShading;
+        base.castShadow=o.castShadow;
+        base.receiveShadow=o.receiveShadow;
+        // Текстура как dataURL если есть
+        if(o.material.map&&o.material.map.image){
+          try{
+            const c=document.createElement('canvas');
+            c.width=o.material.map.image.width||256;
+            c.height=o.material.map.image.height||256;
+            c.getContext('2d').drawImage(o.material.map.image,0,0);
+            base.mapDataURL=c.toDataURL('image/png');
+          }catch(e){}
+        }
+      }
+      // Для света
+      if(o.isLight){
+        base.lightIntensity=o.intensity;
+        base.lightColor=o.color.getHex();
+        if(o.distance!==undefined)base.lightDistance=o.distance;
+        if(o.angle!==undefined)base.lightAngle=o.angle;
+      }
+      // Для импортированной модели — сохраняем всю структуру как GLTF-like JSON
+      if(o.userData.type==='imported'){
+        base.imported=true;
+        // Сериализуем всю иерархию через Three.js toJSON
+        try{
+          base.sceneJSON=o.toJSON();
+        }catch(e){console.warn('Cannot serialize imported',e);}
+        // Встроенные анимации
+        if(o.userData.sourceAnimations&&o.userData.sourceAnimations.length>0){
+          base.clips=o.userData.sourceAnimations.map(clip=>{
+            try{return THREE.AnimationClip.toJSON(clip);}catch(e){return null;}
+          }).filter(Boolean);
+        }
+        base.autoAnim=!!o.userData.autoAnim;
+      }
+      return base;
+    })
   };
 }
 function applyData(data){
+  // Убираем все текущие объекты
   objects.slice().forEach(o=>{
+    if(o.userData.mixer){o.userData.mixer.stopAllAction();o.userData.mixer=null;}
     scene.remove(o);
     if(o.geometry)o.geometry.dispose();
     if(o.material){
@@ -2235,8 +2284,12 @@ function applyData(data){
       else o.material.dispose();
     }
   });
-  objects.length=0;selectedObjects.length=0;selected=null;
+  objects.length=0;
+  selectedObjects.length=0;
+  selected=null;
   Object.keys(counters).forEach(k=>delete counters[k]);
+  
+  // Восстановить anim config
   if(data.anim){
     anim.current=data.anim.current||1;
     anim.start=data.anim.start||1;
@@ -2246,6 +2299,8 @@ function applyData(data){
     document.getElementById('fEnd').value=anim.end;
     document.getElementById('fFps').value=anim.fps;
   }
+  
+  // Восстановить камеру
   if(data.camera){
     camera.position.fromArray(data.camera.pos);
     orbit.target.fromArray(data.camera.target);
@@ -2255,38 +2310,123 @@ function applyData(data){
     orbit.phi=Math.acos(off.y/orbit.radius);
     orbit.update();redrawGizmo();
   }
+  
+  // Восстановить фон
+  if(data.bgConfig){
+    document.getElementById('bgColorPicker').value=data.bgConfig.color||'#3a3a3a';
+    if(data.bgConfig.fit)document.getElementById('bgFit').value=data.bgConfig.fit;
+    if(data.bgConfig.blur!==undefined)document.getElementById('bgBlur').value=data.bgConfig.blur;
+    if(data.bgConfig.brightness!==undefined)document.getElementById('bgBrightness').value=data.bgConfig.brightness;
+    if(data.bgConfig.dataURL){
+      const img=new Image();
+      img.onload=()=>{bgImageData={img,name:'restored'};applySceneBackground();};
+      img.src=data.bgConfig.dataURL;
+    }else if(data.bgConfig.url){
+      const img=new Image();
+      img.crossOrigin='anonymous';
+      img.onload=()=>{bgImageData={img,name:'restored'};applySceneBackground();};
+      img.src=data.bgConfig.url;
+    }else{
+      bgImageData=null;
+      applySceneBackground();
+    }
+  }
+  
+  // Восстановить объекты
   (data.objects||[]).forEach(od=>{
-    const type=od.type;
     let obj;
-    if(type==='camera')obj=addObject('camera');
-    else if(type==='light'||type==='spotlight')obj=addObject(type);
-    else obj=addObject(type,{color:od.color});
-    obj.userData.name=od.name;
-    obj.position.fromArray(od.pos);
-    obj.rotation.set(od.rot[0],od.rot[1],od.rot[2]);
-    obj.scale.fromArray(od.scl);
+    if(od.type==='camera'){
+      obj=addObject('camera');
+    }else if(od.type==='light'||od.type==='spotlight'){
+      obj=addObject(od.type);
+    }else if(od.imported&&od.sceneJSON){
+      // ⭐ Восстановить импортированную модель через ObjectLoader
+      try{
+        const loader=new THREE.ObjectLoader();
+        obj=loader.parse(od.sceneJSON);
+      }catch(e){
+        console.error('Cannot restore imported model',e);
+        return;
+      }
+      obj.userData.type='imported';
+      obj.userData.imported=true;
+      obj.userData.animations=emptyAnim();
+      scene.add(obj);
+      objects.push(obj);
+      // Восстановить встроенные анимации
+      if(od.clips&&od.clips.length>0){
+        try{
+          const clips=od.clips.map(c=>THREE.AnimationClip.parse(c));
+          obj.userData.sourceAnimations=clips;
+          obj.userData.mixer=new THREE.AnimationMixer(obj);
+          obj.userData.mixerActions=[];
+          clips.forEach(clip=>{
+            const action=obj.userData.mixer.clipAction(clip);
+            action.loop=THREE.LoopRepeat;
+            action.clampWhenFinished=true;
+            obj.userData.mixerActions.push(action);
+          });
+          if(od.autoAnim){
+            obj.userData.mixerActions.forEach(a=>a.play());
+            obj.userData.autoAnim=true;
+          }
+        }catch(e){console.warn('Cannot restore clips',e);}
+      }
+    }else{
+      obj=addObject(od.type,{color:od.color});
+    }
+    
+    obj.userData.name=od.name||obj.userData.name;
+    obj.position.fromArray(od.pos||[0,0,0]);
+    obj.rotation.set(...(od.rot||[0,0,0]));
+    obj.scale.fromArray(od.scl||[1,1,1]);
+    obj.visible=od.visible!==false;
+    
     if(obj.isMesh){
+      if(od.color!==undefined)obj.material.color.setHex(od.color);
       obj.material.metalness=od.metal??0.1;
       obj.material.roughness=od.rough??0.55;
       if(od.opacity!==undefined){obj.material.opacity=od.opacity;obj.material.transparent=od.opacity<1}
       if(od.emissive!==undefined)obj.material.emissiveIntensity=od.emissive;
       if(od.emissiveColor)obj.material.emissive.setHex(od.emissiveColor);
       if(od.wireframe)obj.material.wireframe=true;
+      if(od.flatShading){obj.material.flatShading=true;obj.material.needsUpdate=true}
       obj.castShadow=od.castShadow!==false;
       obj.receiveShadow=od.receiveShadow!==false;
+      // Текстура
+      if(od.mapDataURL){
+        const tex=new THREE.TextureLoader();
+        tex.load(od.mapDataURL,loaded=>{
+          loaded.colorSpace=THREE.SRGBColorSpace;
+          obj.material.map=loaded;
+          obj.material.needsUpdate=true;
+        });
+      }
     }
+    
     if(obj.isLight){
       if(od.lightIntensity!==undefined)obj.intensity=od.lightIntensity;
       if(od.lightColor!==undefined)obj.color.setHex(od.lightColor);
+      if(od.lightDistance!==undefined&&obj.distance!==undefined)obj.distance=od.lightDistance;
+      if(od.lightAngle!==undefined&&obj.isSpotLight)obj.angle=od.lightAngle;
     }
-    obj.visible=od.visible!==false;
-    if(od.anim)obj.userData.animations=od.anim;
+    
+    // ⭐ Восстановить собственные keyframe'ы пользователя
+    if(od.animations){
+      obj.userData.animations=od.animations;
+    }
   });
-  selectObject(null);refreshOutliner();rebuildAnim();
+  
+  selectObject(null);
+  refreshOutliner();
+  rebuildAnim();
   document.getElementById('fFrame').value=anim.current;
   document.getElementById('curFrame').textContent=anim.current;
   document.getElementById('stFrame').textContent=anim.current;
-  applyAnim(anim.current);updatePlayhead();updateAnimInfo();
+  applyAnim(anim.current);
+  updatePlayhead();
+  updateAnimInfo();
+  toast('Сцена загружена','success');
 }
 function saveScene(){
   try{
