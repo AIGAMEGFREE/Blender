@@ -3,517 +3,1727 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blender Web Ultimate</title>
+    <title>Blender Web Ultimate - Full Edition</title>
+
     <style>
-        /* СБРОС */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* ==========================================================================
+           1. СБРОС СТИЛЕЙ (CSS RESET)
+           ========================================================================== */
         
-        /* ПЕРЕМЕННЫЕ */
-        :root {
-            --bg-darkest: #141414; --bg-dark: #1a1a1a; --bg-panel: #222222;
-            --bg-header: #333333; --bg-hover: #404040; --border-main: #111111;
-            --border-light: #3a3a3a; --accent: #e87d0d; --accent-hover: #ff9428;
-            --text-main: #cccccc; --text-dim: #888888; --text-bright: #ffffff;
-            --axis-x: #e5484d; --axis-y: #6ab04c; --axis-z: #4b7bd9;
-            --green: #6ab04c; --red: #d94b4b; --keyframe-color: #e8a10d;
-            --font-ui: 'Segoe UI', Tahoma, sans-serif; --font-mono: 'Consolas', monospace;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        /* БАЗА */
-        html, body { width: 100%; height: 100%; overflow: hidden; font-family: var(--font-ui); font-size: 12px; background: var(--bg-darkest); color: var(--text-main); user-select: none; -webkit-font-smoothing: antialiased; }
-        button { font-family: inherit; font-size: inherit; color: inherit; cursor: pointer; border: none; background: none; outline: none; }
-        input, select { font-family: inherit; font-size: inherit; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        /* ==========================================================================
+           2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ (CSS VARIABLES)
+           ========================================================================== */
+        
+        :root {
+            /* --- Цвета фона --- */
+            --bg-darkest: #141414;
+            --bg-dark: #1a1a1a;
+            --bg-panel: #222222;
+            --bg-panel-light: #2b2b2b;
+            --bg-header: #333333;
+            --bg-hover: #404040;
+            --bg-active: #454545;
+            
+            /* --- Цвета границ --- */
+            --border-main: #111111;
+            --border-light: #3a3a3a;
+            
+            /* --- Акцентные цвета --- */
+            --accent: #e87d0d;
+            --accent-hover: #ff9428;
+            --accent-dim: #b85f08;
+            
+            /* --- Цвета текста --- */
+            --text-main: #cccccc;
+            --text-dim: #888888;
+            --text-bright: #ffffff;
+            
+            /* --- Цвета осей --- */
+            --axis-x: #e5484d;
+            --axis-y: #6ab04c;
+            --axis-z: #4b7bd9;
+            
+            /* --- Статусные цвета --- */
+            --green: #6ab04c;
+            --red: #d94b4b;
+            --keyframe-color: #e8a10d;
+            
+            /* --- Шрифты --- */
+            --font-ui: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --font-mono: 'Consolas', 'Courier New', monospace;
+        }
 
-        /* СЕТКА ПРИЛОЖЕНИЯ */
-        #app { display: grid; grid-template-columns: 1fr 340px; grid-template-rows: 26px 30px 1fr 200px 22px; grid-template-areas: "titlebar titlebar" "menubar menubar" "viewport right-panel" "timeline right-panel" "statusbar statusbar"; width: 100vw; height: 100vh; }
+        /* ==========================================================================
+           3. БАЗОВЫЕ СТИЛИ ДОКУМЕНТА
+           ========================================================================== */
+        
+        html, 
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-ui);
+            font-size: 12px;
+            background-color: var(--bg-darkest);
+            color: var(--text-main);
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
 
-        /* TITLEBAR */
-        #titlebar { grid-area: titlebar; background: var(--bg-dark); display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid var(--border-main); font-size: 11px; color: var(--text-dim); }
-        #titlebar .logo { color: var(--accent); font-weight: 700; margin-right: 8px; font-size: 14px; }
-        #titlebar .fname { color: var(--text-main); }
-        #titlebar .fname.dirty::after { content: ' *'; color: var(--accent); }
-        #titlebar .spacer { flex: 1; }
+        /* ==========================================================================
+           4. СТИЛИ ДЛЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
+           ========================================================================== */
+        
+        button {
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+            cursor: pointer;
+            border: none;
+            background: none;
+            outline: none;
+        }
 
-        /* MENUBAR */
-        #menubar { grid-area: menubar; background: var(--bg-panel); display: flex; align-items: center; padding: 0 6px; border-bottom: 1px solid var(--border-main); z-index: 100; }
-        .menu-btn { padding: 0 12px; height: 30px; display: flex; align-items: center; cursor: pointer; position: relative; border-radius: 3px; transition: background 0.1s; }
-        .menu-btn:hover { background: var(--bg-hover); }
-        .menu-btn.open { background: var(--accent); color: #fff; }
-        .menu-dropdown { position: absolute; top: 100%; left: 0; min-width: 220px; background: var(--bg-header); border: 1px solid var(--border-main); box-shadow: 0 8px 24px rgba(0,0,0,0.8); display: none; padding: 4px 0; z-index: 1000; border-radius: 0 0 4px 4px; }
-        .menu-btn.open .menu-dropdown { display: block; }
-        .menu-item { padding: 6px 16px; cursor: pointer; display: flex; justify-content: space-between; gap: 24px; white-space: nowrap; }
-        .menu-item:hover { background: var(--accent); color: #fff; }
-        .menu-item .shortcut { color: var(--text-dim); font-size: 10px; font-family: var(--font-mono); }
-        .menu-item:hover .shortcut { color: rgba(255,255,255,0.7); }
-        .menu-sep { height: 1px; background: var(--border-light); margin: 4px 0; }
-        #menubar .spacer { flex: 1; }
+        input, 
+        select {
+            font-family: inherit;
+            font-size: inherit;
+        }
 
-        /* VIEWPORT */
-        #viewport { grid-area: viewport; position: relative; background: #3a3a3a; overflow: hidden; border-right: 1px solid var(--border-main); }
-        #viewport canvas { display: block; width: 100%; height: 100%; }
-        #viewport.dragover::after { content: 'Отпусти файл'; position: absolute; inset: 20px; border: 3px dashed var(--accent); border-radius: 12px; background: rgba(232,125,13,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; font-weight: 600; z-index: 999; pointer-events: none; }
-        .vp-info { position: absolute; pointer-events: none; font-size: 11px; color: #ddd; text-shadow: 0 1px 2px rgba(0,0,0,0.7); z-index: 5; }
-        #info-tl { top: 10px; left: 10px; line-height: 1.6; }
-        #info-tl .mode { color: var(--accent); font-weight: bold; }
-        #info-bl { bottom: 10px; left: 10px; color: #999; font-size: 10px; }
-        #info-br { bottom: 10px; right: 110px; color: #999; font-size: 10px; font-family: var(--font-mono); }
-        #tools { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 3px; z-index: 6; }
-        .tool-btn { width: 34px; height: 34px; background: rgba(30,30,30,0.8); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; color: #ccc; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
-        .tool-btn:hover { background: rgba(70,70,70,0.9); }
-        .tool-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-        .tool-btn.rec { background: #5c1a1a; color: #ff8888; border-color: #8a3a3a; }
-        .tool-btn.rec.on { background: var(--red); color: #fff; animation: pulse 1s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        #nav-gizmo { position: absolute; bottom: 10px; right: 10px; width: 100px; height: 100px; z-index: 7; cursor: grab; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
-        #nav-gizmo:active { cursor: grabbing; }
-        #sel-box { position: absolute; border: 1px solid var(--accent); background: rgba(232,125,13,0.15); display: none; pointer-events: none; z-index: 20; }
-        #preview-cam { position: absolute; bottom: 130px; right: 10px; width: 240px; height: 135px; background: #000; border: 2px solid var(--accent); border-radius: 6px; display: none; z-index: 8; }
-        #preview-cam.show { display: block; }
+        /* ==========================================================================
+           5. КАСТОМНЫЕ СКРОЛЛБАРЫ
+           ========================================================================== */
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
 
-        /* RIGHT PANEL */
-        #right-panel { grid-area: right-panel; background: var(--bg-panel); display: flex; flex-direction: column; overflow: hidden; }
-        .panel-header { background: var(--bg-header); padding: 5px 10px; font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid var(--border-main); display: flex; justify-content: space-between; align-items: center; cursor: pointer; min-height: 22px; }
-        .panel-header:hover { background: var(--bg-hover); }
-        #outliner { max-height: 150px; overflow-y: auto; padding: 3px 0; border-bottom: 1px solid var(--border-main); flex-shrink: 0; }
-        .outliner-row { padding: 4px 10px; display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; border-left: 2px solid transparent; transition: background 0.08s; }
-        .outliner-row:hover { background: var(--bg-hover); }
-        .outliner-row.selected { background: var(--accent) !important; color: #fff !important; }
-        .outliner-row .icon { width: 14px; text-align: center; font-size: 11px; }
-        .outliner-row .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .outliner-row .eye { color: var(--text-dim); font-size: 11px; padding: 0 3px; cursor: pointer; opacity: 0.6; }
-        .outliner-row:hover .eye { opacity: 1; }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
 
-        /* TABS */
-        .tab-bar { display: flex; background: var(--bg-header); border-bottom: 1px solid var(--border-main); padding: 0 4px; gap: 2px; flex-shrink: 0; overflow-x: auto; }
-        .tab-btn { flex: 1; min-width: 36px; padding: 8px 4px; text-align: center; cursor: pointer; font-size: 14px; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all 0.15s; }
-        .tab-btn:hover { color: var(--text-main); background: var(--bg-hover); }
-        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-        #properties { flex: 1; overflow-y: auto; padding: 8px; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        ::-webkit-scrollbar-thumb {
+            background: #444444;
+            border-radius: 4px;
+        }
 
-        /* PROP GROUPS */
-        .prop-group { background: var(--bg-header); border: 1px solid var(--border-light); border-radius: 4px; margin-bottom: 6px; overflow: hidden; }
-        .prop-group-header { padding: 6px 10px; font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.6px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-hover); }
-        .prop-group-body { padding: 8px 10px; }
-        .prop-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 6px; margin-bottom: 5px; min-height: 22px; }
-        .prop-row > label { font-size: 11px; color: var(--text-dim); }
-        .prop-row > .fields { display: flex; gap: 3px; align-items: center; }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555555;
+        }
 
-        /* INPUT FIELDS */
-        .input-field { flex: 1; min-width: 0; height: 22px; background: var(--bg-dark); border: 1px solid var(--border-light); border-radius: 3px; display: flex; align-items: center; overflow: hidden; transition: border-color 0.1s; }
-        .input-field:focus-within { border-color: var(--accent); }
-        .input-field .axis-tag { font-size: 10px; font-weight: 700; padding: 0 5px; cursor: ew-resize; height: 100%; display: flex; align-items: center; border-right: 1px solid var(--border-light); }
+        /* ==========================================================================
+           6. СЕТКА ПРИЛОЖЕНИЯ (GRID LAYOUT)
+           ========================================================================== */
+        
+        #app {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            grid-template-rows: 26px 30px 1fr 200px 22px;
+            grid-template-areas:
+                "titlebar titlebar"
+                "menubar menubar"
+                "viewport right-panel"
+                "timeline right-panel"
+                "statusbar statusbar";
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* ==========================================================================
+           7. ЗАГОЛОВОК ОКНА (TITLE BAR)
+           ========================================================================== */
+        
+        #titlebar {
+            grid-area: titlebar;
+            background-color: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            border-bottom: 1px solid var(--border-main);
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        #titlebar .logo {
+            color: var(--accent);
+            font-weight: 700;
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        #titlebar .fname {
+            color: var(--text-main);
+        }
+
+        #titlebar .fname.dirty::after {
+            content: ' *';
+            color: var(--accent);
+        }
+
+        #titlebar .spacer {
+            flex: 1;
+        }
+
+        /* ==========================================================================
+           8. ГЛАВНОЕ МЕНЮ (MENU BAR)
+           ========================================================================== */
+        
+        #menubar {
+            grid-area: menubar;
+            background-color: var(--bg-panel);
+            display: flex;
+            align-items: center;
+            padding: 0 6px;
+            border-bottom: 1px solid var(--border-main);
+            z-index: 100;
+        }
+
+        .menu-btn {
+            padding: 0 12px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            border-radius: 3px;
+            transition: background 0.1s;
+        }
+
+        .menu-btn:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .menu-btn.open {
+            background-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 220px;
+            background-color: var(--bg-header);
+            border: 1px solid var(--border-main);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+            display: none;
+            padding: 4px 0;
+            z-index: 1000;
+            border-radius: 0 0 4px 4px;
+        }
+
+        .menu-btn.open .menu-dropdown {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 6px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            white-space: nowrap;
+        }
+
+        .menu-item:hover {
+            background-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .menu-item .shortcut {
+            color: var(--text-dim);
+            font-size: 10px;
+            font-family: var(--font-mono);
+        }
+
+        .menu-item:hover .shortcut {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .menu-sep {
+            height: 1px;
+            background-color: var(--border-light);
+            margin: 4px 0;
+        }
+
+        #menubar .spacer {
+            flex: 1;
+        }
+
+        /* ==========================================================================
+           9. 3D-ВЬЮПОРТ (VIEWPORT)
+           ========================================================================== */
+        
+        #viewport {
+            grid-area: viewport;
+            position: relative;
+            background-color: #3a3a3a;
+            overflow: hidden;
+            border-right: 1px solid var(--border-main);
+        }
+
+        #viewport canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Оверлей при перетаскивании файла */
+        #viewport.dragover::after {
+            content: 'Отпусти файл — модель загрузится';
+            position: absolute;
+            inset: 20px;
+            border: 3px dashed var(--accent);
+            border-radius: 12px;
+            background: rgba(232, 125, 13, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #ffffff;
+            font-weight: 600;
+            z-index: 999;
+            pointer-events: none;
+            text-shadow: 0 2px 8px #000000;
+        }
+
+        /* Информационные надписи поверх 3D */
+        .vp-info {
+            position: absolute;
+            pointer-events: none;
+            font-size: 11px;
+            color: #dddddd;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+            z-index: 5;
+        }
+
+        #info-tl {
+            top: 10px;
+            left: 10px;
+            line-height: 1.6;
+        }
+
+        #info-tl .mode {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        #info-bl {
+            bottom: 10px;
+            left: 10px;
+            color: #999999;
+            font-size: 10px;
+        }
+
+        #info-br {
+            bottom: 10px;
+            right: 110px;
+            color: #999999;
+            font-size: 10px;
+            font-family: var(--font-mono);
+        }
+
+        /* ==========================================================================
+           10. ПАНЕЛЬ ИНСТРУМЕНТОВ (СЛЕВА)
+           ========================================================================== */
+        
+        #tools {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            z-index: 6;
+        }
+
+        .tool-btn {
+            width: 34px;
+            height: 34px;
+            background: rgba(30, 30, 30, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            color: #cccccc;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.12s;
+        }
+
+        .tool-btn:hover {
+            background: rgba(70, 70, 70, 0.9);
+        }
+
+        .tool-btn.active {
+            background-color: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
+
+        .tool-btn.rec {
+            background-color: #5c1a1a;
+            color: #ff8888;
+            border-color: #8a3a3a;
+        }
+
+        .tool-btn.rec.on {
+            background-color: var(--red);
+            color: #ffffff;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+        /* ==========================================================================
+           11. НАВИГАЦИОННЫЙ ГИЗМО (ОСИ СПРАВА СНИЗУ)
+           ========================================================================== */
+        
+        #nav-gizmo {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 100px;
+            height: 100px;
+            z-index: 7;
+            cursor: grab;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+        }
+
+        #nav-gizmo:active {
+            cursor: grabbing;
+        }
+
+        /* ==========================================================================
+           12. РАМКА ВЫДЕЛЕНИЯ (BOX SELECT)
+           ========================================================================== */
+        
+        #sel-box {
+            position: absolute;
+            border: 1px solid var(--accent);
+            background: rgba(232, 125, 13, 0.15);
+            display: none;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* ==========================================================================
+           13. ПРАВАЯ ПАНЕЛЬ (OUTLINER + PROPERTIES)
+           ========================================================================== */
+        
+        #right-panel {
+            grid-area: right-panel;
+            background-color: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background-color: var(--bg-header);
+            padding: 5px 10px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 1px solid var(--border-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            min-height: 22px;
+        }
+
+        .panel-header:hover {
+            background-color: var(--bg-hover);
+        }
+
+        /* Список объектов */
+        #outliner {
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 3px 0;
+            border-bottom: 1px solid var(--border-main);
+            flex-shrink: 0;
+        }
+
+        .outliner-row {
+            padding: 4px 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            border-left: 2px solid transparent;
+            transition: background 0.08s;
+        }
+
+        .outliner-row:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .outliner-row.selected {
+            background-color: var(--accent) !important;
+            color: #ffffff !important;
+        }
+
+        /* Иконки и названия в Outliner */
+        .outliner-row .icon {
+            width: 14px;
+            text-align: center;
+            font-size: 11px;
+        }
+
+        .outliner-row .name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .outliner-row .eye {
+            color: var(--text-dim);
+            font-size: 11px;
+            padding: 0 3px;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .outliner-row:hover .eye {
+            opacity: 1;
+        }
+
+        /* ==========================================================================
+           14. ВКЛАДКИ (TABS)
+           ========================================================================== */
+        
+        .tab-bar {
+            display: flex;
+            background-color: var(--bg-header);
+            border-bottom: 1px solid var(--border-main);
+            padding: 0 4px;
+            gap: 2px;
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 36px;
+            padding: 8px 4px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-dim);
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background-color: var(--bg-hover);
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* Контент свойств */
+        #properties {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ==========================================================================
+           15. ГРУППЫ СВОЙСТВ
+           ========================================================================== */
+        
+        .prop-group {
+            background-color: var(--bg-header);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            margin-bottom: 6px;
+            overflow: hidden;
+        }
+
+        .prop-group-header {
+            padding: 6px 10px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-hover);
+        }
+
+        .prop-group-body {
+            padding: 8px 10px;
+        }
+
+        /* ==========================================================================
+           16. СТРОКИ ВВОДА (PROP ROWS)
+           ========================================================================== */
+        
+        .prop-row {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 5px;
+            min-height: 22px;
+        }
+
+        .prop-row > label {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .prop-row > .fields {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+
+        /* ==========================================================================
+           17. БЛОКИ ВВОДА (INPUT FIELDS)
+           ========================================================================== */
+        
+        .input-field {
+            flex: 1;
+            min-width: 0;
+            height: 22px;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-light);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            transition: border-color 0.1s;
+        }
+
+        .input-field:focus-within {
+            border-color: var(--accent);
+        }
+
+        .input-field.keyed {
+            border-color: var(--keyframe-color);
+            background-color: #2a2210;
+        }
+
+        .input-field .axis-tag {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 0 5px;
+            cursor: ew-resize;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            border-right: 1px solid var(--border-light);
+        }
+
         .input-field .axis-tag.x { color: var(--axis-x); }
         .input-field .axis-tag.y { color: var(--axis-y); }
         .input-field .axis-tag.z { color: var(--axis-z); }
-        .input-field input, .input-field select { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--text-main); padding: 0 6px; font-size: 11px; font-family: var(--font-mono); height: 100%; }
-        .input-field select option { background: var(--bg-panel); color: var(--text-main); }
 
-        /* SLIDERS & BUTTONS */
-        input[type="range"] { flex: 1; -webkit-appearance: none; background: var(--bg-dark); border-radius: 2px; height: 4px; outline: none; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; cursor: pointer; }
-        .value-label { width: 38px; text-align: right; font-size: 10px; color: var(--text-dim); font-family: var(--font-mono); }
-        .check-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 11px; cursor: pointer; }
-        .btn-row { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
-        .btn-sm { padding: 4px 10px; background: var(--bg-dark); border: 1px solid var(--border-light); border-radius: 3px; font-size: 11px; }
-        .btn-sm:hover { background: var(--bg-hover); }
-        .btn-sm.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-        .btn-sm.danger { background: #5c1a1a; color: #ff9999; border-color: #8a3a3a; }
+        .input-field input,
+        .input-field select {
+            flex: 1;
+            min-width: 0;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            padding: 0 6px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            height: 100%;
+        }
 
-        /* TIMELINE */
-        #timeline { grid-area: timeline; background: var(--bg-panel); border-top: 1px solid var(--border-main); border-right: 1px solid var(--border-main); display: flex; flex-direction: column; }
-        #timeline-controls { display: flex; align-items: center; gap: 4px; padding: 5px 8px; background: var(--bg-header); border-bottom: 1px solid var(--border-main); }
-        .tl-btn { background: var(--bg-dark); border: 1px solid var(--border-light); color: var(--text-main); min-width: 30px; height: 24px; border-radius: 4px; }
-        .tl-btn.playing { background: var(--green); color: #fff; }
-        .tl-btn.rec.on { background: var(--red); color: #fff; }
-        .tl-field input { background: var(--bg-dark); border: 1px solid var(--border-light); color: var(--text-main); padding: 2px 6px; border-radius: 3px; width: 50px; font-family: var(--font-mono); }
-        #timeline-track { flex: 1; position: relative; background: #1a1a1a; overflow: hidden; cursor: pointer; }
-        #timeline-ruler { position: absolute; top: 0; left: 0; right: 0; height: 20px; background: var(--bg-header); border-bottom: 1px solid var(--border-main); }
-        .ruler-tick { position: absolute; top: 0; height: 100%; border-left: 1px solid #444; padding-left: 4px; line-height: 20px; font-size: 9px; font-family: var(--font-mono); }
-        #timeline-keys { position: absolute; top: 20px; left: 0; right: 0; bottom: 0; overflow-y: auto; }
-        .keyframe-row { height: 22px; display: flex; align-items: center; border-bottom: 1px solid #222; }
-        .keyframe-label { width: 150px; padding: 0 10px; font-size: 10px; background: var(--bg-header); border-right: 1px solid var(--border-main); height: 100%; display: flex; align-items: center; position: sticky; left: 0; z-index: 3; font-family: var(--font-mono); color: var(--text-dim); }
-        .keyframe-content { flex: 1; position: relative; height: 100%; }
-        .keyframe-diamond { position: absolute; top: 50%; width: 11px; height: 11px; background: var(--keyframe-color); border: 1px solid #000; transform: translate(-50%, -50%) rotate(45deg); cursor: pointer; z-index: 1; }
-        .keyframe-diamond.selected { background: #fff; box-shadow: 0 0 8px var(--accent); }
-        #playhead { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--accent); pointer-events: none; z-index: 6; }
-        #playhead::before { content: ''; position: absolute; top: 0; left: -6px; width: 13px; height: 12px; background: var(--accent); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+        .input-field select {
+            cursor: pointer;
+            padding: 0 3px;
+        }
 
-        /* STATUS BAR */
-        #statusbar { grid-area: statusbar; background: var(--bg-header); border-top: 1px solid var(--border-main); display: flex; align-items: center; padding: 0 12px; gap: 16px; font-size: 11px; color: var(--text-dim); }
-        .status-item b { color: var(--accent); font-weight: 600; }
-        #statusbar .spacer { flex: 1; }
+        .input-field select option {
+            background-color: var(--bg-panel);
+            color: var(--text-main);
+        }
 
-        /* MODALS */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9999; }
-        .modal.open { display: flex; }
-        .modal-box { background: var(--bg-panel); border: 1px solid var(--border-light); border-radius: 8px; padding: 18px; min-width: 420px; }
-        .modal-box h3 { font-size: 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
-        .modal-box h3 span { color: var(--accent); }
-        .add-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .add-item { padding: 14px 6px; background: var(--bg-header); border: 1px solid var(--border-light); border-radius: 5px; cursor: pointer; text-align: center; font-size: 11px; }
-        .add-item:hover { background: var(--accent); color: #fff; }
-        .add-item .icon { font-size: 22px; display: block; margin-bottom: 5px; }
+        /* Убираем стрелочки у number */
+        .input-field input[type="number"]::-webkit-inner-spin-button,
+        .input-field input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
 
-        /* TOAST & LOADING */
-        #toast { position: fixed; bottom: 34px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(20,20,20,0.96); border: 1px solid var(--border-light); border-left: 3px solid var(--green); color: #fff; padding: 9px 18px; border-radius: 5px; opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 99999; }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-        #toast.error { border-left-color: var(--red); }
-        #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 99999; flex-direction: column; gap: 16px; }
-        #loading.show { display: flex; }
-        #loading .spinner { width: 50px; height: 50px; border: 4px solid var(--border-light); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .input-field input[type="color"] {
+            padding: 0 3px;
+            height: 100%;
+        }
+
+        /* ==========================================================================
+           18. ПОЛЗУНКИ (SLIDERS)
+           ========================================================================== */
+        
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            background-color: var(--bg-dark);
+            border-radius: 2px;
+            height: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .value-label {
+            width: 38px;
+            text-align: right;
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+        }
+
+        /* ==========================================================================
+           19. ЧЕКБОКСЫ И КНОПКИ
+           ========================================================================== */
+        
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .check-row input {
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 4px 10px;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-light);
+            border-radius: 3px;
+            font-size: 11px;
+            transition: background 0.12s;
+        }
+
+        .btn-sm:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .btn-sm.primary {
+            background-color: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
+
+        .btn-sm.danger {
+            background-color: #5c1a1a;
+            color: #ff9999;
+            border-color: #8a3a3a;
+        }
+
+        /* ==========================================================================
+           20. ТАЙМЛАЙН
+           ========================================================================== */
+        
+        #timeline {
+            grid-area: timeline;
+            background-color: var(--bg-panel);
+            border-top: 1px solid var(--border-main);
+            border-right: 1px solid var(--border-main);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #timeline-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 8px;
+            background-color: var(--bg-header);
+            border-bottom: 1px solid var(--border-main);
+            font-size: 11px;
+            flex-wrap: wrap;
+        }
+
+        .tl-btn {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-light);
+            color: var(--text-main);
+            min-width: 30px;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.1s;
+        }
+
+        .tl-btn:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .tl-btn.playing {
+            background-color: var(--green);
+            color: #ffffff;
+            border-color: #3d8b40;
+        }
+
+        .tl-btn.rec {
+            background-color: #5c1a1a;
+            color: #ff8888;
+            border-color: #8a3a3a;
+        }
+
+        .tl-btn.rec.on {
+            background-color: var(--red);
+            color: #ffffff;
+        }
+
+        .tl-field {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-dim);
+            font-size: 11px;
+        }
+
+        .tl-field input {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-light);
+            color: var(--text-main);
+            padding: 2px 6px;
+            border-radius: 3px;
+            width: 55px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            outline: none;
+        }
+
+        .tl-field input:focus {
+            border-color: var(--accent);
+        }
+
+        #curFrame {
+            color: var(--accent);
+            font-weight: bold;
+            font-family: var(--font-mono);
+            font-size: 13px;
+        }
+
+        /* Дорожка таймлайна */
+        #timeline-track {
+            flex: 1;
+            position: relative;
+            background-color: #1a1a1a;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        #timeline-ruler {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background-color: var(--bg-header);
+            border-bottom: 1px solid var(--border-main);
+            overflow: hidden;
+            z-index: 4;
+        }
+
+        .ruler-tick {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            border-left: 1px solid #444444;
+            padding-left: 4px;
+            line-height: 20px;
+            font-size: 9px;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+            pointer-events: none;
+        }
+
+        #timeline-keys {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .keyframe-row {
+            height: 22px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #222222;
+            position: relative;
+        }
+
+        .keyframe-label {
+            width: 150px;
+            padding: 0 10px;
+            font-size: 10px;
+            background-color: var(--bg-header);
+            border-right: 1px solid var(--border-main);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .keyframe-label.selected {
+            color: var(--accent);
+        }
+
+        .keyframe-content {
+            flex: 1;
+            position: relative;
+            height: 100%;
+            min-width: 0;
+        }
+
+        .keyframe-diamond {
+            position: absolute;
+            top: 50%;
+            width: 11px;
+            height: 11px;
+            background-color: var(--keyframe-color);
+            border: 1px solid #000000;
+            transform: translate(-50%, -50%) rotate(45deg);
+            cursor: pointer;
+            z-index: 1;
+            transition: all 0.12s;
+        }
+
+        .keyframe-diamond:hover {
+            background-color: #ffb347;
+            transform: translate(-50%, -50%) rotate(45deg) scale(1.35);
+            z-index: 5;
+        }
+
+        .keyframe-diamond.selected {
+            background-color: #ffffff;
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        #playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: var(--accent);
+            pointer-events: none;
+            z-index: 6;
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        #playhead::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -6px;
+            width: 13px;
+            height: 12px;
+            background-color: var(--accent);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+        }
+
+        /* ==========================================================================
+           21. СТАТУС-БАР
+           ========================================================================== */
+        
+        #statusbar {
+            grid-area: statusbar;
+            background-color: var(--bg-header);
+            border-top: 1px solid var(--border-main);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 16px;
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .status-item b {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        #statusbar .spacer {
+            flex: 1;
+        }
+
+        /* ==========================================================================
+           22. МОДАЛЬНЫЕ ОКНА
+           ========================================================================== */
+        
+        .modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 18px;
+            min-width: 420px;
+            max-width: 640px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-box h3 {
+            font-size: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-main);
+        }
+
+        .modal-box h3 button {
+            color: var(--text-dim);
+            font-size: 20px;
+            padding: 0 4px;
+            line-height: 1;
+        }
+
+        .modal-box h3 button:hover {
+            color: var(--red);
+        }
+
+        .add-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            max-height: 360px;
+            overflow-y: auto;
+        }
+
+        .add-item {
+            padding: 14px 6px;
+            background-color: var(--bg-header);
+            border: 1px solid var(--border-light);
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 11px;
+            transition: all 0.12s;
+        }
+
+        .add-item:hover {
+            background-color: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .add-item .icon {
+            font-size: 22px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* ==========================================================================
+           23. УВЕДОМЛЕНИЯ (TOASTS)
+           ========================================================================== */
+        
+        #toast {
+            position: fixed;
+            bottom: 34px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background-color: rgba(20, 20, 20, 0.96);
+            border: 1px solid var(--border-light);
+            border-left: 3px solid var(--green);
+            color: #ffffff;
+            padding: 9px 18px;
+            border-radius: 5px;
+            font-size: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s;
+            z-index: 99999;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #toast.error {
+            border-left-color: var(--red);
+        }
     </style>
 </head>
-<body>
+    <body>
 
+<!-- ==========================================================================
+     ГЛАВНЫЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ
+     ========================================================================== -->
 <div id="app">
-    <!-- TITLE BAR -->
+
+    <!-- ======================================================================
+         TITLE BAR (Заголовок окна)
+         ====================================================================== -->
     <div id="titlebar">
         <span class="logo">⬤</span>
         <span class="fname" id="filename">Untitled</span>
         <span class="spacer"></span>
-        <span style="font-size:10px;color:var(--text-dim);">Blender Web Ultimate</span>
+        <span style="font-size:10px;color:var(--text-dim);">Blender Web Ultimate v1.0</span>
     </div>
 
-    <!-- MENU BAR -->
+    <!-- ======================================================================
+         MENU BAR (Верхнее меню)
+         ====================================================================== -->
     <div id="menubar">
-        <div class="menu-btn" data-menu="file">File
+        
+        <!-- ================================================================
+             FILE MENU
+             ================================================================ -->
+        <div class="menu-btn" data-menu="file">
+            File
             <div class="menu-dropdown">
-                <div class="menu-item" data-act="new">New <span class="shortcut">Ctrl+N</span></div>
-                <div class="menu-item" data-act="open">Open Scene <span class="shortcut">Ctrl+O</span></div>
-                <div class="menu-item" data-act="import-model">Import Model</div>
+                <div class="menu-item" data-act="new">
+                    New
+                    <span class="shortcut">Ctrl+N</span>
+                </div>
+                <div class="menu-item" data-act="open">
+                    Open Scene…
+                    <span class="shortcut">Ctrl+O</span>
+                </div>
+                <div class="menu-item" data-act="import-model">
+                    Import Model…
+                    <span class="shortcut">.glb/.gltf</span>
+                </div>
                 <div class="menu-sep"></div>
-                <div class="menu-item" data-act="save">Save <span class="shortcut">Ctrl+S</span></div>
-                <div class="menu-item" data-act="render">Render PNG <span class="shortcut">F12</span></div>
-                <div class="menu-item" data-act="video-rec">🎥 Record Video <span class="shortcut">Ctrl+R</span></div>
+                <div class="menu-item" data-act="save">
+                    Save Scene
+                    <span class="shortcut">Ctrl+S</span>
+                </div>
+                <div class="menu-item" data-act="render">
+                    Render PNG
+                    <span class="shortcut">F12</span>
+                </div>
             </div>
         </div>
-        <div class="menu-btn" data-menu="edit">Edit
+
+        <!-- ================================================================
+             EDIT MENU
+             ================================================================ -->
+        <div class="menu-btn" data-menu="edit">
+            Edit
             <div class="menu-dropdown">
-                <div class="menu-item" data-act="duplicate">Duplicate <span class="shortcut">Shift+D</span></div>
-                <div class="menu-item" data-act="delete">Delete <span class="shortcut">X</span></div>
+                <div class="menu-item" data-act="duplicate">
+                    Duplicate
+                    <span class="shortcut">Shift+D</span>
+                </div>
+                <div class="menu-item" data-act="delete">
+                    Delete
+                    <span class="shortcut">X</span>
+                </div>
                 <div class="menu-sep"></div>
-                <div class="menu-item" data-act="select-all">Select All <span class="shortcut">Ctrl+A</span></div>
-                <div class="menu-item" data-act="deselect">Deselect <span class="shortcut">Alt+A</span></div>
-                <div class="menu-item" data-act="focus">Focus Selected <span class="shortcut">.</span></div>
+                <div class="menu-item" data-act="select-all">
+                    Select All
+                    <span class="shortcut">Ctrl+A</span>
+                </div>
+                <div class="menu-item" data-act="deselect">
+                    Deselect
+                    <span class="shortcut">Alt+A</span>
+                </div>
+                <div class="menu-sep"></div>
+                <div class="menu-item" data-act="focus">
+                    Focus Selected
+                    <span class="shortcut">.</span>
+                </div>
             </div>
         </div>
-        <div class="menu-btn" data-menu="add">Add
+
+        <!-- ================================================================
+             ADD MENU
+             ================================================================ -->
+        <div class="menu-btn" data-menu="add">
+            Add
             <div class="menu-dropdown">
                 <div class="menu-item" data-act="add:cube">Cube</div>
                 <div class="menu-item" data-act="add:sphere">UV Sphere</div>
                 <div class="menu-item" data-act="add:torus">Torus</div>
                 <div class="menu-item" data-act="add:cylinder">Cylinder</div>
-                <div class="menu-item" data-act="add:cone">Cone</div>
                 <div class="menu-item" data-act="add:plane">Plane</div>
                 <div class="menu-sep"></div>
                 <div class="menu-item" data-act="add:light">Point Light</div>
                 <div class="menu-item" data-act="add:camera">Camera</div>
             </div>
         </div>
-        <div class="menu-btn" data-menu="physics">Physics
+
+        <!-- ================================================================
+             ANIMATION MENU
+             ================================================================ -->
+        <div class="menu-btn" data-menu="anim">
+            Animation
             <div class="menu-dropdown">
-                <div class="menu-item" data-act="phys-toggle">Toggle Physics</div>
-                <div class="menu-item" data-act="phys-kick">Kick / Jump</div>
-                <div class="menu-item" data-act="phys-stop">Stop All</div>
+                <div class="menu-item" data-act="key:position">Keyframe Location</div>
+                <div class="menu-item" data-act="key:rotation">Keyframe Rotation</div>
+                <div class="menu-item" data-act="key:scale">Keyframe Scale</div>
+                <div class="menu-item" data-act="key:all">
+                    Keyframe All
+                    <span class="shortcut">I</span>
+                </div>
             </div>
         </div>
+
+        <!-- ================================================================
+             PHYSICS MENU
+             ================================================================ -->
+        <div class="menu-btn" data-menu="physics">
+            Physics
+            <div class="menu-dropdown">
+                <div class="menu-item" data-act="phys-toggle">
+                    🎯 Вкл/выкл для выделенных
+                </div>
+                <div class="menu-item" data-act="phys-kick">
+                    ⬆ Подбросить
+                </div>
+                <div class="menu-item" data-act="phys-stop">
+                    ⏹ Стоп движение
+                </div>
+                <div class="menu-sep"></div>
+                <div class="menu-item" data-act="phys-enable-all">
+                    Включить всем
+                </div>
+                <div class="menu-item" data-act="phys-disable-all">
+                    Выключить у всех
+                </div>
+            </div>
+        </div>
+
+        <!-- Растяжка справа -->
         <div class="spacer"></div>
     </div>
 
-    <!-- VIEWPORT -->
+    <!-- ======================================================================
+         VIEWPORT (3D-сцена)
+         ====================================================================== -->
     <div id="viewport">
+        
+        <!-- ================================================================
+             ИНФОРМАЦИЯ О СЦЕНЕ (ЛЕВО-ВЕРХ)
+             ================================================================ -->
         <div class="vp-info" id="info-tl">
             <div>User Perspective</div>
             <div class="mode" id="modeText">OBJECT MODE</div>
             <div id="selText" style="color:#aaa;">Nothing selected</div>
         </div>
-        <div class="vp-info" id="info-bl">LMB Select · RMB Rotate · Wheel Zoom · Drag&Drop</div>
+        
+        <!-- ================================================================
+             ПОДСКАЗКИ (ЛЕВО-НИЗ)
+             ================================================================ -->
+        <div class="vp-info" id="info-bl">
+            LMB Select · RMB Rotate · Wheel Zoom · Drag&Drop
+        </div>
+        
+        <!-- ================================================================
+             РАЗМЕР ВЬЮПОРТА (ПРАВО-НИЗ)
+             ================================================================ -->
         <div class="vp-info" id="info-br">—</div>
 
+        <!-- ================================================================
+             ПАНЕЛЬ ИНСТРУМЕНТОВ (СЛЕВА)
+             ================================================================ -->
         <div id="tools">
-            <button class="tool-btn active" data-tool="select">↖</button>
-            <button class="tool-btn" data-tool="move">✥</button>
-            <button class="tool-btn" data-tool="rotate">↻</button>
-            <button class="tool-btn" data-tool="scale">⤢</button>
-            <button class="tool-btn" data-tool="add">＋</button>
-            <button class="tool-btn" data-tool="import">📁</button>
-            <button class="tool-btn" data-tool="dup">⎘</button>
-            <button class="tool-btn" data-tool="del">✕</button>
-            <button class="tool-btn" data-tool="key">◆</button>
-            <button class="tool-btn" data-tool="focus">⊙</button>
-            <button class="tool-btn rec" data-tool="video" id="btnVideoTool">🎥</button>
+            <button class="tool-btn active" data-tool="select" title="Select (W)">↖</button>
+            <button class="tool-btn" data-tool="move" title="Move (G)">✥</button>
+            <button class="tool-btn" data-tool="rotate" title="Rotate (R)">↻</button>
+            <button class="tool-btn" data-tool="scale" title="Scale (S)">⤢</button>
+            <button class="tool-btn" data-tool="add" title="Add (Shift+A)">＋</button>
+            <button class="tool-btn" data-tool="import" title="Import Model">📁</button>
+            <button class="tool-btn" data-tool="dup" title="Duplicate (Shift+D)">⎘</button>
+            <button class="tool-btn" data-tool="del" title="Delete (X)">✕</button>
+            <button class="tool-btn" data-tool="key" title="Keyframe (I)">◆</button>
+            <button class="tool-btn rec" data-tool="video" id="btnVideoTool" title="Record Video">🎥</button>
         </div>
-        <svg id="nav-gizmo" viewBox="0 0 100 100"></svg>
-        <div id="sel-box"></div>
-        <div id="preview-cam">
-            <div style="position:absolute;top:4px;left:8px;color:#fff;font-size:10px;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:3px;z-index:2;" id="previewCamLabel">Camera</div>
-            <canvas id="previewCanvas" width="480" height="270"></canvas>
-        </div>
-    </div>
 
-    <!-- RIGHT PANEL -->
+        <!-- ================================================================
+             НАВИГАЦИОННЫЙ ГИЗМО (СПРАВА-СНИЗУ)
+             ================================================================ -->
+        <svg id="nav-gizmo" viewBox="0 0 100 100"></svg>
+        
+        <!-- ================================================================
+             РАМКА ВЫДЕЛЕНИЯ
+             ================================================================ -->
+        <div id="sel-box"></div>
+
+    </div>
+        <!-- ======================================================================
+         RIGHT PANEL (Outliner + Properties)
+         ====================================================================== -->
     <div id="right-panel">
-        <div class="panel-header" id="outlinerHeader">Outliner <span id="objCountBadge">0</span></div>
+        
+        <!-- ================================================================
+             OUTLINER (Список объектов)
+             ================================================================ -->
+        <div class="panel-header" id="outlinerHeader">
+            Outliner 
+            <span id="objCountBadge" style="color:var(--text-main)">0</span>
+        </div>
         <div id="outliner"></div>
 
+        <!-- ================================================================
+             ВКЛАДКИ PROPERTIES
+             ================================================================ -->
         <div class="tab-bar">
             <div class="tab-btn active" data-tab="object">⚙</div>
             <div class="tab-btn" data-tab="transform">↔</div>
             <div class="tab-btn" data-tab="material">🎨</div>
-            <div class="tab-btn" data-tab="physics">⚛</div>
+            <div class="tab-btn" data-tab="physics" title="Физика">⚛</div>
             <div class="tab-btn" data-tab="scene">🌄</div>
-            <div class="tab-btn" data-tab="light">💡</div>
             <div class="tab-btn" data-tab="animation">🎬</div>
         </div>
 
+        <!-- ================================================================
+             КОНТЕНТ PROPERTIES
+             ================================================================ -->
         <div id="properties">
-            <!-- OBJECT TAB -->
+
+            <!-- ============================================================
+                 TAB: Object
+                 ============================================================ -->
             <div class="tab-content active" data-tab-content="object">
+                
                 <div class="prop-group">
                     <div class="prop-group-header">Object</div>
                     <div class="prop-group-body">
+                        
                         <div class="prop-row" style="grid-template-columns:1fr;">
-                            <div class="fields"><div class="input-field" style="flex:1;"><input type="text" id="pName"></div></div>
+                            <div class="fields">
+                                <div class="input-field" style="flex:1;">
+                                    <input type="text" id="pName" placeholder="—">
+                                </div>
+                            </div>
                         </div>
-                        <div class="prop-row"><label>Type</label><span id="pType" style="color:var(--text-dim);">—</span></div>
-                        <label class="check-row"><input type="checkbox" id="pVisible" checked> Visible</label>
-                        <label class="check-row"><input type="checkbox" id="pCastShadow" checked> Cast shadow</label>
-                        <label class="check-row"><input type="checkbox" id="pReceiveShadow" checked> Receive shadow</label>
-                        <button class="btn-sm primary" id="btnLookThrough" style="display:none;width:100%;margin-top:6px;">👁 Смотреть через камеру</button>
-                        <button class="btn-sm" id="btnPlayEmbeddedAnim" style="display:none;width:100%;margin-top:6px;">🎬 Играть анимацию</button>
-                        <button class="btn-sm" id="btnStopEmbeddedAnim" style="display:none;width:100%;margin-top:4px;">⏹ Остановить</button>
+                        
+                        <div class="prop-row">
+                            <label>Type</label>
+                            <span id="pType" style="color:var(--text-dim);font-size:11px;">—</span>
+                        </div>
+                        
+                        <label class="check-row">
+                            <input type="checkbox" id="pVisible" checked> Visible
+                        </label>
+                        
+                        <label class="check-row">
+                            <input type="checkbox" id="pCastShadow" checked> Cast shadow
+                        </label>
+                        
+                        <label class="check-row">
+                            <input type="checkbox" id="pReceiveShadow" checked> Receive shadow
+                        </label>
+                        
                     </div>
                 </div>
+
                 <div class="prop-group">
                     <div class="prop-group-header">Actions</div>
                     <div class="prop-group-body">
                         <div class="btn-row">
                             <button class="btn-sm" data-act="duplicate">Duplicate</button>
-                            <button class="btn-sm" data-act="focus">Focus</button>
                             <button class="btn-sm danger" data-act="delete">Delete</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- TRANSFORM TAB -->
+            <!-- ============================================================
+                 TAB: Transform (Полигоны)
+                 ============================================================ -->
             <div class="tab-content" data-tab-content="transform">
+                
                 <div class="prop-group">
-                    <div class="prop-group-header">Transform <span class="key-btn" id="kAll">◆</span></div>
+                    <div class="prop-group-header">Transform</div>
                     <div class="prop-group-body">
+                        
                         <div class="prop-row">
                             <label>Location</label>
                             <div class="fields">
-                                <div class="input-field"><span class="axis-tag" style="color:var(--axis-x)">X</span><input type="number" step="0.1" id="pLocX" value="0"></div>
-                                <div class="input-field"><span class="axis-tag" style="color:var(--axis-y)">Y</span><input type="number" step="0.1" id="pLocY" value="0"></div>
-                                <div class="input-field"><span class="axis-tag" style="color:var(--axis-z)">Z</span><input type="number" step="0.1" id="pLocZ" value="0"></div>
+                                <div class="input-field">
+                                    <span class="axis-tag x">X</span>
+                                    <input type="number" step="0.1" id="pLocX" value="0">
+                                </div>
+                                <div class="input-field">
+                                    <span class="axis-tag y">Y</span>
+                                    <input type="number" step="0.1" id="pLocY" value="0">
+                                </div>
+                                <div class="input-field">
+                                    <span class="axis-tag z">Z</span>
+                                    <input type="number" step="0.1" id="pLocZ" value="0">
+                                </div>
                             </div>
                         </div>
+
                         <div class="prop-row">
                             <label>Rotation</label>
                             <div class="fields">
-                                <div class="input-field"><span class="axis-tag" style="color:var(--axis-x)">X</span><input type="number" step="1" id="pRotX" value="0"></div>
-                                <div class="input-field"><span class="axis-tag" style="color:var(--axis-y)">Y</span><input type="number" step="1" id="pRotY" value="0"></div>
-                                <div class="input-field"><span class="axis-tag" style="color:var(--axis-z)">Z</span><input type="number" step="1" id="pRotZ" value="0"></div>
+                                <div class="input-field">
+                                    <span class="axis-tag x">X</span>
+                                    <input type="number" step="1" id="pRotX" value="0">
+                                </div>
+                                <div class="input-field">
+                                    <span class="axis-tag y">Y</span>
+                                    <input type="number" step="1" id="pRotY" value="0">
+                                </div>
+                                <div class="input-field">
+                                    <span class="axis-tag z">Z</span>
+                                    <input type="number" step="1" id="pRotZ" value="0">
+                                </div>
                             </div>
                         </div>
+
                         <div class="prop-row">
                             <label>Scale</label>
                             <div class="fields">
-                                <div class="input-field"><span class="axis-tag" style="color:var(--axis-x)">X</span><input type="number" step="0.1" id="pSclX" value="1"></div>
-                                <div class="input-field"><span class="axis-tag" style="color:var(--axis-y)">Y</span><input type="number" step="0.1" id="pSclY" value="1"></div>
-                                <div class="input-field"><span class="axis-tag" style="color:var(--axis-z)">Z</span><input type="number" step="0.1" id="pSclZ" value="1"></div>
+                                <div class="input-field">
+                                    <span class="axis-tag x">X</span>
+                                    <input type="number" step="0.1" id="pSclX" value="1">
+                                </div>
+                                <div class="input-field">
+                                    <span class="axis-tag y">Y</span>
+                                    <input type="number" step="0.1" id="pSclY" value="1">
+                                </div>
+                                <div class="input-field">
+                                    <span class="axis-tag z">Z</span>
+                                    <input type="number" step="0.1" id="pSclZ" value="1">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- ПОЛИГОНЫ -->
                 <div class="prop-group" id="polyGroup" style="display:none;">
-                    <div class="prop-group-header">🔷 Полигоны</div>
+                    <div class="prop-group-header">🔷 Детализация (Полигоны)</div>
                     <div class="prop-group-body">
                         <div class="prop-row">
                             <label>Segments</label>
-                            <div class="fields"><input type="range" id="pSegments" min="3" max="128" step="1" value="32"><span class="value-label" id="pSegmentsV">32</span></div>
+                            <div class="fields">
+                                <input type="range" id="pSegments" min="3" max="64" step="1" value="32">
+                                <span class="value-label" id="pSegmentsV">32</span>
+                            </div>
                         </div>
-                        <div class="prop-row"><label>Треугольников</label><span id="pPolyCount" style="color:var(--accent);font-family:monospace;">—</span></div>
-                        <div class="btn-row">
-                            <button class="btn-sm" id="btnLowPoly">Low (8)</button>
-                            <button class="btn-sm" id="btnMedPoly">Med (32)</button>
-                            <button class="btn-sm" id="btnHighPoly">High (96)</button>
+                        <div class="prop-row">
+                            <label>Полигонов</label>
+                            <span id="pPolyCount" style="color:var(--accent);font-family:monospace;">—</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- MATERIAL TAB -->
+            <!-- ============================================================
+                 TAB: Material
+                 ============================================================ -->
             <div class="tab-content" data-tab-content="material">
+                
                 <div class="prop-group">
                     <div class="prop-group-header">Material</div>
                     <div class="prop-group-body">
-                        <div class="prop-row"><label>Base Color</label><div class="fields"><input type="color" id="pColor" value="#cccccc" style="flex:1;height:22px;border:none;background:transparent;"></div></div>
-                        <div class="prop-row"><label>Metallic</label><div class="fields"><input type="range" id="pMetal" min="0" max="1" step="0.01" value="0.1"><span class="value-label" id="pMetalV">0.10</span></div></div>
-                        <div class="prop-row"><label>Roughness</label><div class="fields"><input type="range" id="pRough" min="0" max="1" step="0.01" value="0.55"><span class="value-label" id="pRoughV">0.55</span></div></div>
-                        <div class="prop-row"><label>Opacity</label><div class="fields"><input type="range" id="pOpacity" min="0" max="1" step="0.01" value="1"><span class="value-label" id="pOpacityV">1.00</span></div></div>
-                        <label class="check-row"><input type="checkbox" id="pWireframe"> Wireframe</label>
-                    </div>
-                </div>
-                <div class="prop-group">
-                    <div class="prop-group-header">Photo Texture</div>
-                    <div class="prop-group-body">
-                        <div class="prop-row"><label>My Photo</label><div class="fields"><button class="btn-sm primary" id="btnLoadTexFromPC" style="flex:1;">📷 Загрузить фото</button></div></div>
-                        <div class="prop-row"><label>Fit</label><div class="fields"><select id="pTexFit" style="flex:1;background:var(--bg-dark);color:var(--text);border:1px solid var(--border-light);"><option value="tile">Tile</option><option value="stretch">Stretch</option><option value="fit">Fit</option></select></div></div>
-                        <div class="prop-row"><label>Preview</label><div class="fields"><div style="display:flex;gap:6px;"><div id="tex-preview" style="width:60px;height:60px;background:#111;border:1px solid var(--border-light);border-radius:4px;background-size:cover;background-position:center;"></div><button class="btn-sm danger" id="btnClearTex">✕</button></div></div></div>
-                    </div>
-                </div>
-                <div class="prop-group">
-                    <div class="prop-group-header">Pattern Presets</div>
-                    <div class="prop-group-body">
-                        <div class="prop-row"><label>Preset</label><div class="fields"><select id="pTexture" style="flex:1;background:var(--bg-dark);color:var(--text);border:1px solid var(--border-light);">
-                            <option value="none">None</option><option value="checker">Checker</option><option value="grid">Grid</option>
-                            <option value="bricks">Bricks</option><option value="noise">Noise</option><option value="dots">Dots</option>
-                            <option value="stripes">Stripes</option><option value="wood">Wood</option><option value="metal">Metal</option><option value="gradient">Gradient</option>
-                        </select></div></div>
-                        <div class="prop-row"><label>Scale</label><div class="fields"><input type="range" id="pTexScale" min="0.5" max="30" step="0.1" value="4"><span class="value-label" id="pTexScaleV">4.0</span></div></div>
-                    </div>
-                </div>
-                <div class="prop-group">
-                    <div class="prop-group-header">Presets</div>
-                    <div class="prop-group-body">
-                        <div class="btn-row">
-                            <button class="btn-sm" data-preset="default">Default</button><button class="btn-sm" data-preset="orange">Orange</button>
-                            <button class="btn-sm" data-preset="blue">Blue</button><button class="btn-sm" data-preset="red">Red</button>
-                            <button class="btn-sm" data-preset="green">Green</button><button class="btn-sm" data-preset="gold">Gold</button>
-                            <button class="btn-sm" data-preset="metal">Metal</button><button class="btn-sm" data-preset="plastic">Plastic</button>
-                            <button class="btn-sm" data-preset="glass">Glass</button><button class="btn-sm" data-preset="emissive">Emissive</button>
+                        
+                        <div class="prop-row">
+                            <label>Color</label>
+                            <div class="fields">
+                                <div class="input-field" style="flex:1;">
+                                    <input type="color" id="pColor" value="#cccccc">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="prop-row">
+                            <label>Metallic</label>
+                            <div class="fields">
+                                <input type="range" id="pMetal" min="0" max="1" step="0.01" value="0.1">
+                                <span class="value-label" id="pMetalV">0.10</span>
+                            </div>
+                        </div>
+                        
+                        <div class="prop-row">
+                            <label>Roughness</label>
+                            <div class="fields">
+                                <input type="range" id="pRough" min="0" max="1" step="0.01" value="0.55">
+                                <span class="value-label" id="pRoughV">0.55</span>
+                            </div>
+                        </div>
+
+                        <div class="prop-row">
+                            <label>Texture</label>
+                            <div class="fields">
+                                <input type="file" id="texFile" accept="image/*" style="font-size:10px;">
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- PHYSICS TAB -->
+            <!-- ============================================================
+                 TAB: Physics
+                 ============================================================ -->
             <div class="tab-content" data-tab-content="physics">
+                
                 <div class="prop-group">
-                    <div class="prop-group-header">⚛ World</div>
+                    <div class="prop-group-header">⚛ Мир (Глобально)</div>
                     <div class="prop-group-body">
-                        <label class="check-row"><input type="checkbox" id="physEnabled"> Enable Simulation</label>
-                        <div class="prop-row"><label>Gravity Y</label><div class="fields"><input type="range" id="physGravity" min="-50" max="10" step="0.1" value="-9.82"><span class="value-label" id="physGravityV">-9.8</span></div></div>
-                        <div class="prop-row"><label>Friction</label><div class="fields"><input type="range" id="physFriction" min="0" max="1" step="0.01" value="0.3"><span class="value-label" id="physFrictionV">0.30</span></div></div>
-                        <div class="prop-row"><label>Restitution</label><div class="fields"><input type="range" id="physRestitution" min="0" max="1" step="0.01" value="0.5"><span class="value-label" id="physRestitutionV">0.50</span></div></div>
-                        <div class="btn-row"><button class="btn-sm" id="physReset">♻ Сбросить</button><button class="btn-sm danger" id="physKillAll">⏹ Stop All</button></div>
+                        
+                        <label class="check-row">
+                            <input type="checkbox" id="physEnabled"> Включить физику
+                        </label>
+                        
+                        <div class="prop-row">
+                            <label>Gravity</label>
+                            <div class="fields">
+                                <input type="range" id="physGravity" min="-30" max="10" step="0.1" value="-9.82">
+                                <span class="value-label" id="physGravityV">-9.8</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
                 <div class="prop-group">
-                    <div class="prop-group-header">🎯 Object Physics</div>
+                    <div class="prop-group-header">🎯 Объект</div>
                     <div class="prop-group-body">
-                        <div style="color:var(--text-dim);margin-bottom:6px;" id="physObjInfo">Ничего не выделено</div>
-                        <label class="check-row"><input type="checkbox" id="objPhysEnabled"> Active</label>
-                        <div class="prop-row"><label>Mass</label><div class="fields"><input type="range" id="objPhysMass" min="0.1" max="50" step="0.1" value="1"><span class="value-label" id="objPhysMassV">1.0</span></div></div>
-                        <div class="prop-row"><label>Shape</label><div class="fields"><select id="objPhysShape" style="flex:1;background:var(--bg-dark);color:var(--text);border:1px solid var(--border-light);"><option value="auto">Auto</option><option value="box">Box</option><option value="sphere">Sphere</option></select></div></div>
+                        
+                        <div style="color:var(--text-dim);margin-bottom:6px;" id="physObjInfo">
+                            Ничего не выделено
+                        </div>
+                        
+                        <label class="check-row">
+                            <input type="checkbox" id="objPhysEnabled"> Участвует
+                        </label>
+                        
+                        <div class="prop-row">
+                            <label>Mass</label>
+                            <div class="fields">
+                                <input type="range" id="objPhysMass" min="0.1" max="20" step="0.1" value="1">
+                                <span class="value-label" id="objPhysMassV">1.0</span>
+                            </div>
+                        </div>
+
                         <div class="btn-row">
-                            <button class="btn-sm primary" id="objPhysApply">✓ Apply</button>
-                            <button class="btn-sm" id="objPhysKick">⬆ Kick</button>
-                            <button class="btn-sm" id="objPhysRemove">✕ Remove</button>
+                            <button class="btn-sm primary" id="objPhysKick">⬆ Kick</button>
+                            <button class="btn-sm danger" id="objPhysRemove">✕ Remove</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- SCENE TAB (ФОН) -->
+            <!-- ============================================================
+                 TAB: Scene (Фон)
+                 ============================================================ -->
             <div class="tab-content" data-tab-content="scene">
+                
                 <div class="prop-group">
                     <div class="prop-group-header">🌄 Background</div>
                     <div class="prop-group-body">
-                        <div class="prop-row"><label>Color</label><div class="fields"><input type="color" id="bgColorPicker" value="#3a3a3a" style="flex:1;height:22px;border:none;background:transparent;"></div></div>
-                        <div class="prop-row"><label>Image</label><div class="fields"><button class="btn-sm primary" id="btnLoadBGImage" style="flex:1;">📷 Загрузить фото</button></div></div>
-                        <div class="prop-row"><label>Blur</label><div class="fields"><input type="range" id="bgBlur" min="0" max="20" step="0.5" value="0"><span class="value-label" id="bgBlurV">0</span></div></div>
-                        <div class="btn-row"><button class="btn-sm danger" id="btnClearBGImage" style="width:100%;">✕ Сбросить фон</button></div>
+                        
+                        <div class="prop-row">
+                            <label>Color</label>
+                            <div class="fields">
+                                <input type="color" id="bgColorPicker" value="#3a3a3a" style="flex:1;height:22px;border:none;background:transparent;">
+                            </div>
+                        </div>
+                        
+                        <div class="prop-row">
+                            <label>Image</label>
+                            <div class="fields">
+                                <input type="file" id="bgFile" accept="image/*" style="font-size:10px;">
+                            </div>
+                        </div>
+
+                        <div class="prop-row">
+                            <label>Blur</label>
+                            <div class="fields">
+                                <input type="range" id="bgBlur" min="0" max="20" step="0.5" value="0">
+                                <span class="value-label" id="bgBlurV">0</span>
+                            </div>
+                        </div>
+
+                        <div class="btn-row">
+                            <button class="btn-sm danger" id="btnClearBG" style="width:100%;">✕ Сбросить фон</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- LIGHT TAB -->
-            <div class="tab-content" data-tab-content="light">
-                <div class="prop-group">
-                    <div class="prop-group-header">💡 Light</div>
-                    <div class="prop-group-body">
-                        <div class="prop-row"><label>Color</label><div class="fields"><input type="color" id="lColor" value="#ffffff" style="flex:1;height:22px;border:none;background:transparent;"></div></div>
-                        <div class="prop-row"><label>Intensity</label><div class="fields"><input type="range" id="lIntensity" min="0" max="10" step="0.1" value="2"><span class="value-label" id="lIntensityV">2.0</span></div></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ANIMATION TAB -->
+            <!-- ============================================================
+                 TAB: Animation
+                 ============================================================ -->
             <div class="tab-content" data-tab-content="animation">
                 <div class="prop-group">
-                    <div class="prop-group-header">🎬 Insert Keyframe</div>
+                    <div class="prop-group-header">🎬 Keyframe</div>
                     <div class="prop-group-body">
                         <div class="btn-row">
                             <button class="btn-sm" data-act="key:position">Location</button>
                             <button class="btn-sm" data-act="key:rotation">Rotation</button>
                             <button class="btn-sm" data-act="key:scale">Scale</button>
                         </div>
-                        <div class="btn-row"><button class="btn-sm primary" data-act="key:all">All (I)</button></div>
+                        <div class="btn-row">
+                            <button class="btn-sm primary" data-act="key:all">All (I)</button>
+                        </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
-    <!-- TIMELINE -->
+    <!-- ======================================================================
+         TIMELINE (Таймлайн)
+         ====================================================================== -->
     <div id="timeline">
         <div id="timeline-controls">
             <button class="tl-btn" id="btnPlay">▶</button>
             <button class="tl-btn rec" id="btnRec">⏺ REC</button>
-            <div class="tl-field" style="margin-left:10px;"><label>Frame</label><input type="number" id="fFrame" value="1"></div>
-            <div class="tl-field"><label>FPS</label><input type="number" id="fFps" value="24"></div>
+            
+            <div class="tl-field" style="margin-left:10px;">
+                <label>Frame</label>
+                <input type="number" id="fFrame" value="1">
+            </div>
+            <div class="tl-field">
+                <label>FPS</label>
+                <input type="number" id="fFps" value="24">
+            </div>
+            
             <div class="spacer" style="flex:1;"></div>
-            <div class="tl-field">Current: <span id="curFrame">1</span></div>
+            
+            <div class="tl-field">
+                Current: <span id="curFrame">1</span>
+            </div>
         </div>
+        
         <div id="timeline-track">
             <div id="timeline-ruler"></div>
             <div id="timeline-keys"></div>
-            <div id="playhead" style="left:150px;"></div>
+            <div id="playhead" style="left:0px;"></div>
         </div>
     </div>
 
-    <!-- STATUS BAR -->
+    <!-- ======================================================================
+         STATUS BAR (Статус-бар)
+         ====================================================================== -->
     <div id="statusbar">
         <div class="status-item">Selected: <b id="stSel">0</b></div>
         <div class="status-item">Objects: <b id="stObj">0</b></div>
         <div class="status-item">Frame: <b id="stFrame">1</b></div>
         <div class="status-item">FPS: <b id="stFps">60</b></div>
+        
         <div class="spacer"></div>
-        <div><kbd>W</kbd> Select · <kbd>Space</kbd> Play</div>
+        
+        <div>
+            <kbd>W</kbd> Select · <kbd>G</kbd> Move · <kbd>I</kbd> Keyframe · <kbd>Space</kbd> Play
+        </div>
     </div>
-</div>
 
-<!-- MODALS -->
+</div> <!-- /app -->
+
+<!-- ==========================================================================
+     MODALS (Модальные окна)
+     ========================================================================== -->
 <div class="modal" id="addModal">
     <div class="modal-box">
-        <h3><span>Add Object</span> <button onclick="document.getElementById('addModal').classList.remove('open')">×</button></h3>
+        <h3>
+            <span>Add Object</span> 
+            <button onclick="document.getElementById('addModal').classList.remove('open')">×</button>
+        </h3>
         <div class="add-grid">
             <div class="add-item" data-add="cube"><span class="icon">▢</span>Cube</div>
             <div class="add-item" data-add="sphere"><span class="icon">●</span>Sphere</div>
             <div class="add-item" data-add="torus"><span class="icon">◎</span>Torus</div>
             <div class="add-item" data-add="cylinder"><span class="icon">⬭</span>Cylinder</div>
-            <div class="add-item" data-add="cone"><span class="icon">▲</span>Cone</div>
             <div class="add-item" data-add="plane"><span class="icon">▭</span>Plane</div>
             <div class="add-item" data-add="light"><span class="icon">💡</span>Light</div>
-            <div class="add-item" data-add="camera"><span class="icon">🎥</span>Camera</div>
         </div>
     </div>
 </div>
 
-<div id="loading"><div class="spinner"></div><div class="msg" id="loadingMsg">Загрузка…</div></div>
+<div id="loading">
+    <div class="spinner"></div>
+    <div class="msg" id="loadingMsg">Загрузка…</div>
+</div>
 <div id="toast"></div>
-
-<script type="importmap">
+        <script type="importmap">
 {
     "imports": {
         "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
@@ -522,6 +1732,7 @@
     }
 }
 </script>
+
 <script type="module">
 /* ==========================================================================
    ИМПОРТ БИБЛИОТЕК
@@ -529,32 +1740,17 @@
 import * as THREE from 'three';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import * as CANNON from 'cannon-es';
 
 /* ==========================================================================
-   УТИЛИТЫ (УВЕДОМЛЕНИЯ, ЗАГРУЗКА)
+   УТИЛИТЫ (УВЕДОМЛЕНИЯ)
    ========================================================================== */
-
-function toast(msg, type) {
+function toast(msg, type = '') {
     const el = document.getElementById('toast');
     el.textContent = msg;
-    el.className = type || '';
+    el.className = type;
     el.classList.add('show');
-    clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove('show'), 2500);
-}
-
-function showLoading(msg) {
-    document.getElementById('loadingMsg').textContent = msg;
-    document.getElementById('loading').classList.add('show');
-}
-
-function hideLoading() {
-    document.getElementById('loading').classList.remove('show');
+    setTimeout(() => el.classList.remove('show'), 2500);
 }
 
 let isDirty = false;
@@ -562,41 +1758,47 @@ function markDirty() {
     isDirty = true;
     document.getElementById('filename').classList.add('dirty');
 }
-function clearDirty() {
-    isDirty = false;
-    document.getElementById('filename').classList.remove('dirty');
-}
 
 /* ==========================================================================
    ИНИЦИАЛИЗАЦИЯ THREE.JS
    ========================================================================== */
-
 const viewportEl = document.getElementById('viewport');
-
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x3a3a3a);
 
-const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 2000);
+const camera = new THREE.PerspectiveCamera(50, viewportEl.clientWidth / viewportEl.clientHeight, 0.1, 2000);
 camera.position.set(7, 5, 7);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(viewportEl.clientWidth, viewportEl.clientHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
 viewportEl.appendChild(renderer.domElement);
 
 /* ==========================================================================
-   ОРБИТАЛЬНАЯ КАМЕРА (СВОЯ РЕАЛИЗАЦИЯ)
+   СВЕТ И СЕТКА
    ========================================================================== */
+scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+dirLight.position.set(5, 10, 5);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.width = 1024;
+dirLight.shadow.mapSize.height = 1024;
+scene.add(dirLight);
+
+const grid = new THREE.GridHelper(50, 50, 0x555555, 0x333333);
+scene.add(grid);
+
+/* ==========================================================================
+   ОРБИТАЛЬНАЯ КАМЕРА
+   ========================================================================== */
 const orbit = {
     target: new THREE.Vector3(0, 0, 0),
     radius: camera.position.length(),
     theta: Math.atan2(camera.position.x, camera.position.z),
     phi: Math.acos(camera.position.y / camera.position.length()),
-    enabled: true,
     update() {
         const sp = Math.sin(this.phi);
         camera.position.set(
@@ -604,981 +1806,569 @@ const orbit = {
             this.target.y + this.radius * Math.cos(this.phi),
             this.target.z + this.radius * sp * Math.cos(this.theta)
         );
-        camera.up.set(0, 1, 0);
         camera.lookAt(this.target);
     }
 };
 
 let camState = 'none';
-let camLastX = 0, camLastY = 0;
+let lastX = 0, lastY = 0;
 
 viewportEl.addEventListener('contextmenu', e => e.preventDefault());
 viewportEl.addEventListener('mousedown', e => {
-    if (!orbit.enabled) return;
-    if (e.target.closest('#tools') || e.target.closest('#nav-gizmo') || e.target.closest('#preview-cam')) return;
-    if (e.button === 2) { camState = 'rotate'; }
+    if (e.target.closest('#tools') || e.target.closest('#nav-gizmo')) return;
+    if (e.button === 2) camState = 'rotate';
     else if (e.button === 1) { camState = 'pan'; e.preventDefault(); }
-    else if (e.button === 0 && e.altKey) { camState = 'rotate'; }
     else return;
-    camLastX = e.clientX; camLastY = e.clientY;
+    lastX = e.clientX; lastY = e.clientY;
 });
+
 window.addEventListener('mousemove', e => {
-    if (!orbit.enabled || camState === 'none') return;
-    const dx = e.clientX - camLastX, dy = e.clientY - camLastY;
-    camLastX = e.clientX; camLastY = e.clientY;
+    if (camState === 'none') return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+
     if (camState === 'rotate') {
         orbit.theta -= dx * 0.008;
         orbit.phi -= dy * 0.008;
-        orbit.update(); redrawGizmo();
+        orbit.update();
+        redrawGizmo();
     } else if (camState === 'pan') {
-        const dist = camera.position.distanceTo(orbit.target);
-        const f = dist * 0.0015;
         const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
         const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
-        orbit.target.addScaledVector(right, -dx * f).addScaledVector(up, dy * f);
+        const dist = camera.position.distanceTo(orbit.target) * 0.0015;
+        orbit.target.addScaledVector(right, -dx * dist).addScaledVector(up, dy * dist);
         orbit.update();
     }
 });
-window.addEventListener('mouseup', () => { camState = 'none'; });
+window.addEventListener('mouseup', () => camState = 'none');
+
 viewportEl.addEventListener('wheel', e => {
-    if (!orbit.enabled) return;
     e.preventDefault();
     orbit.radius *= (e.deltaY > 0 ? 1.1 : 0.9);
-    orbit.radius = Math.max(0.5, Math.min(200, orbit.radius));
+    orbit.radius = Math.max(1, Math.min(100, orbit.radius));
     orbit.update();
-}, { passive: false });
+});
 
 /* ==========================================================================
-   НАВИГАЦИОННЫЙ ГИЗМО
+   ГИЗМО
    ========================================================================== */
-
 function redrawGizmo() {
-    const axes = [
-        { id: 'x', color: '#e5484d', dir: new THREE.Vector3(1, 0, 0) },
-        { id: 'y', color: '#6ab04c', dir: new THREE.Vector3(0, 1, 0) },
-        { id: 'z', color: '#4b7bd9', dir: new THREE.Vector3(0, 0, 1) }
-    ];
-    const m = new THREE.Matrix4();
-    m.lookAt(camera.position, orbit.target, camera.up);
-    const inv = m.clone().invert();
-    let svg = '<circle cx="50" cy="50" r="46" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.05)"/>';
-    const projected = axes.map(a => {
-        const v = a.dir.clone().applyMatrix4(inv);
-        return { ...a, x: 50 + v.x * 26, y: 50 - v.y * 26, z: v.z };
-    }).sort((a, b) => a.z - b.z);
-    projected.forEach(a => {
-        const opacity = a.z > 0 ? 0.4 : 1;
-        svg += `<g class="axis-handle" data-axis="${a.id}" style="cursor:pointer">
-            <line x1="50" y1="50" x2="${a.x}" y2="${a.y}" stroke="${a.color}" stroke-width="2" opacity="${opacity}"/>
-            <circle cx="${a.x}" cy="${a.y}" r="7" fill="${a.color}" opacity="${opacity}"/>
-            <text x="${a.x}" y="${a.y + 4}" fill="#fff" font-size="9" text-anchor="middle" font-weight="700" pointer-events="none">${a.id.toUpperCase()}</text>
-        </g>`;
-    });
-    svg += '<circle cx="50" cy="50" r="6" fill="#555" stroke="#888" class="center-btn" style="cursor:pointer"/>';
-    document.getElementById('nav-gizmo').innerHTML = svg;
-    document.querySelectorAll('.axis-handle').forEach(h => {
-        h.addEventListener('mousedown', e => e.stopPropagation());
-        h.addEventListener('click', () => clickAxis(h.dataset.axis));
-    });
-    const centerBtn = document.querySelector('.center-btn');
-    if (centerBtn) centerBtn.addEventListener('click', () => animateCamera(new THREE.Vector3(7, 5, 7), new THREE.Vector3(0, 0, 0)));
+    const svg = document.getElementById('nav-gizmo');
+    svg.innerHTML = `
+        <circle cx="50" cy="50" r="45" fill="rgba(0,0,0,0.3)"/>
+        <line x1="50" y1="50" x2="80" y2="50" stroke="var(--axis-x)" stroke-width="2"/>
+        <text x="85" y="54" fill="var(--axis-x)" font-size="12">X</text>
+        <line x1="50" y1="50" x2="50" y2="20" stroke="var(--axis-y)" stroke-width="2"/>
+        <text x="46" y="15" fill="var(--axis-y)" font-size="12">Y</text>
+        <line x1="50" y1="50" x2="30" y2="70" stroke="var(--axis-z)" stroke-width="2"/>
+        <text x="22" y="80" fill="var(--axis-z)" font-size="12">Z</text>
+    `;
 }
 
-function clickAxis(axis) {
-    const d = 10;
-    if (axis === 'x') animateCamera(new THREE.Vector3(d, 0, 0.001), new THREE.Vector3(0, 0, 0));
-    else if (axis === 'y') animateCamera(new THREE.Vector3(0, d, 0.001), new THREE.Vector3(0, 0, 0));
-    else animateCamera(new THREE.Vector3(0, 0, d), new THREE.Vector3(0, 0, 0));
+/* ==========================================================================
+   ОБЪЕКТЫ
+   ========================================================================== */
+const objects = [];
+let selectedObject = null;
+const counters = {};
+const typeNames = {
+    cube: 'Cube', sphere: 'Sphere', torus: 'Torus', cylinder: 'Cylinder', 
+    plane: 'Plane', imported: 'Imported'
+};
+
+let currentTool = 'select';
+
+function makeGeometry(type, segments = 32) {
+    const seg = Math.max(3, Math.min(64, Math.round(segments)));
+    const halfSeg = Math.max(2, Math.round(seg / 2));
+    switch (type) {
+        case 'cube': return new THREE.BoxGeometry(2, 2, 2);
+        case 'sphere': return new THREE.SphereGeometry(1, seg, halfSeg);
+        case 'torus': return new THREE.TorusGeometry(1, 0.4, halfSeg, seg);
+        case 'cylinder': return new THREE.CylinderGeometry(1, 1, 2, seg);
+        case 'plane': return new THREE.PlaneGeometry(2, 2);
+        default: return new THREE.BoxGeometry(2, 2, 2);
+    }
+}
+
+function addObject(type, opts = {}) {
+    const mat = new THREE.MeshStandardMaterial({ 
+        color: opts.color ?? 0xcccccc, 
+        metalness: 0.1, 
+        roughness: 0.55 
+    });
+    const obj = new THREE.Mesh(makeGeometry(type, opts.segments ?? 32), mat);
+    obj.castShadow = true;
+    obj.receiveShadow = true;
+    obj.position.y = type === 'plane' ? 0 : 1;
+    
+    if (type === 'plane') obj.rotation.x = -Math.PI / 2;
+
+    counters[type] = (counters[type] || 0) + 1;
+    obj.userData = {
+        type: type,
+        name: `${typeNames[type]}.${String(counters[type]).padStart(3, '0')}`,
+        segments: opts.segments ?? 32
+    };
+
+    scene.add(obj);
+    objects.push(obj);
+    selectObject(obj);
+    refreshOutliner();
+    markDirty();
+    return obj;
+}
+
+function selectObject(obj) {
+    selectedObject = obj;
+    document.querySelectorAll('.outliner-row').forEach(el => el.classList.remove('selected'));
+    
+    if (obj) {
+        document.getElementById('selText').textContent = obj.userData.name;
+        document.getElementById('pName').value = obj.userData.name;
+        document.getElementById('pType').textContent = typeNames[obj.userData.type] || obj.userData.type;
+        
+        document.getElementById('pLocX').value = obj.position.x.toFixed(2);
+        document.getElementById('pLocY').value = obj.position.y.toFixed(2);
+        document.getElementById('pLocZ').value = obj.position.z.toFixed(2);
+        document.getElementById('pRotX').value = (obj.rotation.x * 180 / Math.PI).toFixed(1);
+        document.getElementById('pRotY').value = (obj.rotation.y * 180 / Math.PI).toFixed(1);
+        document.getElementById('pRotZ').value = (obj.rotation.z * 180 / Math.PI).toFixed(1);
+        document.getElementById('pSclX').value = obj.scale.x.toFixed(2);
+        document.getElementById('pSclY').value = obj.scale.y.toFixed(2);
+        document.getElementById('pSclZ').value = obj.scale.z.toFixed(2);
+        
+        if (obj.material) {
+            document.getElementById('pColor').value = '#' + obj.material.color.getHexString();
+            document.getElementById('pMetal').value = obj.material.metalness;
+            document.getElementById('pRough').value = obj.material.roughness;
+            document.getElementById('pMetalV').textContent = obj.material.metalness.toFixed(2);
+            document.getElementById('pRoughV').textContent = obj.material.roughness.toFixed(2);
+        }
+
+        if (obj.userData.type !== 'imported') {
+            document.getElementById('polyGroup').style.display = 'block';
+            document.getElementById('pSegments').value = obj.userData.segments || 32;
+            document.getElementById('pSegmentsV').textContent = obj.userData.segments || 32;
+            // Считаем полигоны
+            let tris = 0;
+            if (obj.geometry.index) tris = obj.geometry.index.count / 3;
+            else if (obj.geometry.attributes.position) tris = obj.geometry.attributes.position.count / 3;
+            document.getElementById('pPolyCount').textContent = Math.round(tris);
+        } else {
+            document.getElementById('polyGroup').style.display = 'none';
+        }
+
+        if (['move', 'rotate', 'scale'].includes(currentTool)) {
+            transform.attach(obj);
+        } else {
+            transform.detach();
+        }
+        
+        document.getElementById('stSel').textContent = 1;
+    } else {
+        document.getElementById('selText').textContent = 'Nothing selected';
+        document.getElementById('pName').value = '';
+        document.getElementById('pType').textContent = '—';
+        document.getElementById('polyGroup').style.display = 'none';
+        document.getElementById('stSel').textContent = 0;
+        transform.detach();
+    }
+}
+
+function refreshOutliner() {
+    const out = document.getElementById('outliner');
+    out.innerHTML = '';
+    document.getElementById('objCountBadge').textContent = objects.length;
+    document.getElementById('stObj').textContent = objects.length;
+    
+    objects.forEach(o => {
+        const div = document.createElement('div');
+        div.className = 'outliner-row' + (o === selectedObject ? ' selected' : '');
+        div.textContent = o.userData.name;
+        div.onclick = () => selectObject(o);
+        out.appendChild(div);
+    });
 }
 
 /* ==========================================================================
    TRANSFORM CONTROLS (ГАБАРИТЫ)
    ========================================================================== */
-
 const transform = new TransformControls(camera, renderer.domElement);
-transform.setSize(0.85);
-transform.addEventListener('dragging-changed', e => { orbit.enabled = !e.value; });
-transform.addEventListener('objectChange', () => {
-    if (selectedObjects.length === 1) { syncPropsFromSelection(); updateOutline(); }
-});
-transform.addEventListener('mouseUp', () => {
-    if (recording && selectedObjects.length > 0) autoRecord();
-    markDirty();
+transform.addEventListener('dragging-changed', e => {
+    if (e.value && selectedObject) {
+        document.getElementById('pLocX').value = selectedObject.position.x.toFixed(2);
+        document.getElementById('pLocY').value = selectedObject.position.y.toFixed(2);
+        document.getElementById('pLocZ').value = selectedObject.position.z.toFixed(2);
+    }
 });
 scene.add(transform);
 
-/* ==========================================================================
-   ОБВОДКА ВЫДЕЛЕННЫХ ОБЪЕКТОВ
-   ========================================================================== */
-
-let outlineGroup = null;
-function updateOutline() {
-    if (outlineGroup) {
-        scene.remove(outlineGroup);
-        outlineGroup.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
-        outlineGroup = null;
-    }
-    if (selectedObjects.length === 0) return;
-    outlineGroup = new THREE.Group();
-    selectedObjects.forEach(sel => {
-        if (sel.isMesh && sel.geometry && sel.userData.type !== 'camera') {
-            const edges = new THREE.EdgesGeometry(sel.geometry, 20);
-            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff8c1a, transparent: true, depthTest: false, depthWrite: false }));
-            line.position.copy(sel.position);
-            line.rotation.copy(sel.rotation);
-            line.scale.copy(sel.scale);
-            line.raycast = () => {};
-            line.renderOrder = 999;
-            outlineGroup.add(line);
-        } else {
-            sel.traverse(child => {
-                if (child.isMesh && !child.userData.isHelper) {
-                    const edges = new THREE.EdgesGeometry(child.geometry, 20);
-                    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xff8c1a, transparent: true, depthTest: false, depthWrite: false }));
-                    line.position.copy(child.position);
-                    line.rotation.copy(child.rotation);
-                    line.scale.copy(child.scale);
-                    line.raycast = () => {};
-                    line.renderOrder = 999;
-                    outlineGroup.add(line);
-                }
-            });
-            outlineGroup.position.copy(sel.position);
-            outlineGroup.rotation.copy(sel.rotation);
-            outlineGroup.scale.copy(sel.scale);
+document.querySelectorAll('.tool-btn').forEach(btn => {
+    btn.onclick = () => {
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTool = btn.dataset.tool;
+        
+        if (currentTool === 'add') {
+            document.getElementById('addModal').classList.add('open');
+            return;
         }
-    });
-    outlineGroup.renderOrder = 999;
-    outlineGroup.traverse(o => { o.raycast = () => {}; });
-    scene.add(outlineGroup);
-}
 
-/* ==========================================================================
-   СВЕТ И СЕТКА
-   ========================================================================== */
+        if (currentTool === 'del') {
+            if (selectedObject) {
+                scene.remove(selectedObject);
+                objects.splice(objects.indexOf(selectedObject), 1);
+                selectObject(null);
+                refreshOutliner();
+            }
+            return;
+        }
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-scene.add(new THREE.HemisphereLight(0xd9e9ff, 0x3a3a3a, 0.55));
-
-const sunLight = new THREE.DirectionalLight(0xffffff, 1.8);
-sunLight.position.set(7, 12, 5);
-sunLight.castShadow = true;
-sunLight.shadow.mapSize.set(2048, 2048);
-sunLight.shadow.camera.near = 0.5;
-sunLight.shadow.camera.far = 60;
-sunLight.shadow.camera.left = -20;
-sunLight.shadow.camera.right = 20;
-sunLight.shadow.camera.top = 20;
-sunLight.shadow.camera.bottom = -20;
-scene.add(sunLight);
-
-const fillLight = new THREE.DirectionalLight(0x88aaff, 0.3);
-fillLight.position.set(-8, 5, -6);
-scene.add(fillLight);
-
-const gridHelper = new THREE.GridHelper(50, 50, 0x555555, 0x333333);
-gridHelper.material.opacity = 0.55;
-gridHelper.material.transparent = true;
-scene.add(gridHelper);
-
-/* ==========================================================================
-   ХРАНИЛИЩЕ ОБЪЕКТОВ
-   ========================================================================== */
-
-const objects = [];
-const selectedObjects = [];
-let selected = null;
-const counters = {};
-
-const typeNames = {
-    cube: 'Cube', sphere: 'Sphere', torus: 'Torus', cylinder: 'Cylinder',
-    cone: 'Cone', plane: 'Plane', icosahedron: 'Icosahedron', dodecahedron: 'Dodecahedron',
-    octahedron: 'Octahedron', tetrahedron: 'Tetrahedron', light: 'PointLight',
-    spotlight: 'SpotLight', camera: 'Camera', imported: 'Imported'
-};
-
-function emptyAnim() {
-    return { position: [], rotation: [], scale: [], color: [], metalness: [], roughness: [], opacity: [], emissive: [] };
-}
-
-function makeGeometry(type, segments = 32) {
-    const seg = Math.max(3, Math.min(128, Math.round(segments)));
-    const halfSeg = Math.max(2, Math.round(seg / 2));
-    switch (type) {
-        case 'cube': return new THREE.BoxGeometry(2, 2, 2, 1, 1, 1);
-        case 'sphere': return new THREE.SphereGeometry(1, seg, halfSeg);
-        case 'torus': return new THREE.TorusGeometry(1, 0.4, halfSeg, seg);
-        case 'cylinder': return new THREE.CylinderGeometry(1, 1, 2, seg, 1);
-        case 'cone': return new THREE.ConeGeometry(1, 2, seg, 1);
-        case 'plane': return new THREE.PlaneGeometry(2, 2, halfSeg, halfSeg);
-        case 'icosahedron': return new THREE.IcosahedronGeometry(1.2, Math.min(3, Math.floor(seg / 10)));
-        case 'dodecahedron': return new THREE.DodecahedronGeometry(1.2, Math.min(3, Math.floor(seg / 10)));
-        case 'octahedron': return new THREE.OctahedronGeometry(1.2, Math.min(3, Math.floor(seg / 10)));
-        case 'tetrahedron': return new THREE.TetrahedronGeometry(1.3, Math.min(3, Math.floor(seg / 10)));
-        default: return new THREE.BoxGeometry(2, 2, 2);
-    }
-}
+        if (selectedObject) {
+            if (currentTool === 'move') transform.setMode('translate');
+            else if (currentTool === 'rotate') transform.setMode('rotate');
+            else if (currentTool === 'scale') transform.setMode('scale');
+            
+            if (currentTool !== 'select') transform.attach(selectedObject);
+            else transform.detach();
+        }
+    };
+});
 
 /* ==========================================================================
    ФИЗИКА (CANNON-ES)
    ========================================================================== */
-
-const physConfig = {
-    enabled: false, gravity: { x: 0, y: -9.82, z: 0 },
-    friction: 0.3, restitution: 0.5, linearDamping: 0.05, angularDamping: 0.1,
-    speed: 1, iterations: 10, substeps: 3, groundY: 0
-};
-
-const physicsWorld = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
-physicsWorld.broadphase = new CANNON.SAPBroadphase(physicsWorld);
-
-const groundMat = new CANNON.Material('ground');
-const objMat = new CANNON.Material('obj');
-let contactGroundObj = new CANNON.ContactMaterial(groundMat, objMat, { friction: 0.4, restitution: 0.3 });
-let contactObjObj = new CANNON.ContactMaterial(objMat, objMat, { friction: 0.3, restitution: 0.5 });
-physicsWorld.addContactMaterial(contactGroundObj);
-physicsWorld.addContactMaterial(contactObjObj);
-
-const groundBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane(), material: groundMat });
+const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
+const groundBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
 groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
-physicsWorld.addBody(groundBody);
+world.addBody(groundBody);
 
-const physicsBodies = [];
+const bodies = [];
+let physEnabled = false;
 
-function shapeFromMesh(mesh, shapeType = 'auto') {
-    mesh.geometry.computeBoundingBox();
-    const bbox = mesh.geometry.boundingBox;
-    const size = new THREE.Vector3();
-    bbox.getSize(size);
-    const hx = Math.abs(size.x * mesh.scale.x / 2);
-    const hy = Math.abs(size.y * mesh.scale.y / 2);
-    const hz = Math.abs(size.z * mesh.scale.z / 2);
-    if (shapeType === 'sphere') return new CANNON.Sphere(Math.max(hx, hy, hz));
-    return new CANNON.Box(new CANNON.Vec3(hx, hy, hz));
-}
-
-function createBodyForMesh(mesh, opts = {}) {
-    if (!mesh || !mesh.geometry) return null;
-    if (mesh.userData.physicsBody) return mesh.userData.physicsBody;
-    const shapeType = opts.shape || mesh.userData.physicsShape || 'auto';
-    const shape = shapeFromMesh(mesh, shapeType);
-    const type = opts.type || mesh.userData.physicsType || 'dynamic';
-    let mass = type === 'static' || type === 'kinematic' ? 0 : (opts.mass || mesh.userData.physicsMass || 1);
-    const body = new CANNON.Body({
-        mass, shape, material: objMat,
-        linearDamping: opts.linearDamping ?? physConfig.linearDamping,
-        angularDamping: opts.angularDamping ?? physConfig.angularDamping,
-        type: type === 'kinematic' ? CANNON.Body.KINEMATIC : (type === 'static' ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC)
-    });
-    body.position.set(mesh.position.x, mesh.position.y, mesh.position.z);
-    body.quaternion.setFromEuler(mesh.rotation.x, mesh.rotation.y, mesh.rotation.z);
-    physicsWorld.addBody(body);
-    physicsBodies.push({ mesh, body });
-    mesh.userData.physicsBody = body;
-    mesh.userData.physicsEnabled = true;
-    return body;
-}
-
-function enablePhysics(obj, opts = {}) {
-    if (!obj || !obj.isMesh) return;
-    if (obj.userData.physicsBody) return;
-    createBodyForMesh(obj, opts);
-    markDirty();
-}
-
-function disablePhysics(obj) {
-    if (!obj || !obj.userData.physicsBody) return;
-    const idx = physicsBodies.findIndex(p => p.mesh === obj);
-    if (idx > -1) { physicsWorld.removeBody(physicsBodies[idx].body); physicsBodies.splice(idx, 1); }
-    obj.userData.physicsBody = null;
-    obj.userData.physicsEnabled = false;
-    markDirty();
-}
-
-function togglePhysics(obj) {
-    if (!obj || !obj.isMesh) { toast('Только для мешей', 'error'); return; }
-    if (obj.userData.physicsBody) disablePhysics(obj);
-    else enablePhysics(obj);
-}
-
-function updatePhysics(dt) {
-    if (!physConfig.enabled) return;
-    if (physicsBodies.length === 0) return;
-    physicsWorld.gravity.set(physConfig.gravity.x, physConfig.gravity.y, physConfig.gravity.z);
-    const clampedDt = Math.min(dt, 1 / 30) * physConfig.speed;
-    physicsWorld.step(1 / 60, clampedDt, physConfig.substeps);
-    physicsBodies.forEach(({ mesh, body }) => {
-        mesh.position.set(body.position.x, body.position.y, body.position.z);
-        mesh.quaternion.set(body.quaternion.x, body.quaternion.y, body.quaternion.z, body.quaternion.w);
-    });
-    if (outlineGroup && selected) {
-        outlineGroup.position.copy(selected.position);
-        outlineGroup.rotation.copy(selected.rotation);
-        outlineGroup.scale.copy(selected.scale);
-    }
-}
-    /* ==========================================================================
-   ГЕНЕРАТОР ТЕКСТУР
-   ========================================================================== */
-
-function makeTexture(type, scale, color1, color2) {
-    const size = 256;
-    const canvas = document.createElement('canvas');
-    canvas.width = size; canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    color1 = color1 || '#ffffff';
-    color2 = color2 || '#222222';
-    ctx.fillStyle = color1;
-    ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = color2;
-    const cells = Math.max(1, Math.round(scale));
-    const cell = size / cells;
-    if (type === 'checker') {
-        for (let y = 0; y < cells; y++) for (let x = 0; x < cells; x++) {
-            if ((x + y) % 2 === 0) ctx.fillRect(x * cell, y * cell, cell, cell);
-        }
-    } else if (type === 'grid') {
-        ctx.strokeStyle = color2; ctx.lineWidth = 2;
-        for (let i = 0; i <= cells; i++) {
-            ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, size); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(size, i * cell); ctx.stroke();
-        }
-    } else if (type === 'bricks') {
-        const rowH = size / cells; const bw = cell * 2;
-        for (let r = 0; r < cells; r++) {
-            const offset = (r % 2) * (bw / 2);
-            for (let x = -bw; x < size + bw; x += bw) { ctx.fillStyle = color2; ctx.fillRect(x + offset + 2, r * rowH + 2, bw - 4, rowH - 4); }
-        }
-    } else if (type === 'dots') {
-        for (let y = 0; y < cells; y++) for (let x = 0; x < cells; x++) {
-            ctx.beginPath(); ctx.arc(x * cell + cell / 2, y * cell + cell / 2, cell * 0.3, 0, Math.PI * 2); ctx.fill();
-        }
-    } else if (type === 'stripes') {
-        for (let i = 0; i < cells * 2; i++) { if (i % 2 === 0) continue; ctx.fillRect(i * (size / (cells * 2)), 0, size / (cells * 2), size); }
-    } else if (type === 'noise') {
-        const imgData = ctx.getImageData(0, 0, size, size); const d = imgData.data;
-        for (let i = 0; i < d.length; i += 4) { const n = Math.random() * 255; d[i] = n; d[i + 1] = n; d[i + 2] = n; }
-        ctx.putImageData(imgData, 0, 0);
-    } else if (type === 'wood') {
-        for (let y = 0; y < size; y++) {
-            const v = Math.sin(y * 0.3) * 20 + Math.sin(y * 0.1) * 30;
-            ctx.fillStyle = `rgb(${139 + v},${69 + v},${19 + v})`; ctx.fillRect(0, y, size, 1);
-        }
-    } else if (type === 'metal') {
-        const grad = ctx.createLinearGradient(0, 0, size, size);
-        grad.addColorStop(0, '#999'); grad.addColorStop(0.5, '#eee'); grad.addColorStop(1, '#999');
-        ctx.fillStyle = grad; ctx.fillRect(0, 0, size, size);
-        for (let i = 0; i < 2000; i++) { ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.3})`; ctx.fillRect(Math.random() * size, Math.random() * size, 1, 1); }
-    } else if (type === 'gradient') {
-        const grad = ctx.createLinearGradient(0, 0, 0, size);
-        grad.addColorStop(0, color1); grad.addColorStop(1, color2);
-        ctx.fillStyle = grad; ctx.fillRect(0, 0, size, size);
-    }
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.anisotropy = 4;
-    return tex;
-}
-
-/* ==========================================================================
-   ДОБАВЛЕНИЕ ОБЪЕКТОВ
-   ========================================================================== */
-
-function addObject(type, opts = {}) {
-    let obj;
-    if (type === 'camera') {
-        obj = new THREE.PerspectiveCamera(50, 16 / 9, 0.1, 1000);
-        obj.userData.type = 'camera';
-        const helper = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 0.8), new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5, roughness: 0.4 }));
-        body.userData.isHelper = true;
-        const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.3, 12), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }));
-        lens.rotation.x = Math.PI / 2; lens.position.z = -0.5; lens.userData.isHelper = true;
-        helper.add(body, lens); helper.userData.isHelper = true; obj.add(helper);
-        obj.position.set(0, 3, 6); obj.lookAt(0, 0, 0);
-    } else if (type === 'light' || type === 'spotlight') {
-        if (type === 'light') obj = new THREE.PointLight(0xffffff, 2, 0, 2);
-        else obj = new THREE.SpotLight(0xffffff, 2, 20, Math.PI / 6, 0.5, 1);
-        obj.userData.type = type;
-        const helper = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffff00 }));
-        helper.userData.isHelper = true; obj.add(helper); obj.position.y = 4;
-    } else {
-        const mat = new THREE.MeshStandardMaterial({ color: opts.color ?? 0xcccccc, metalness: 0.1, roughness: 0.55, transparent: false, opacity: 1 });
-        const segments = opts.segments ?? 32;
-        obj = new THREE.Mesh(makeGeometry(type, segments), mat);
-        obj.userData.segments = segments;
-        obj.castShadow = true; obj.receiveShadow = true;
-        obj.userData.type = type;
-        obj.position.y = type === 'plane' ? 0 : 1;
-    }
-    counters[type] = (counters[type] || 0) + 1;
-    obj.userData.name = `${typeNames[type] || type}.${String(counters[type]).padStart(3, '0')}`;
-    obj.userData.animations = emptyAnim();
-    scene.add(obj); objects.push(obj); selectObject(obj); refreshOutliner(); markDirty();
-    return obj;
-}
-
-/* ==========================================================================
-   ИЗМЕНЕНИЕ ПОЛИГОНОВ (Segments)
-   ========================================================================== */
-
-function changeSegments(obj, newSegments) {
-    if (!obj || !obj.isMesh) return;
-    if (obj.userData.type === 'imported') { toast('Импортированные модели нельзя упростить', 'warn'); return; }
-    newSegments = Math.max(3, Math.min(128, Math.round(newSegments)));
-    obj.userData.segments = newSegments;
-    const oldGeom = obj.geometry;
-    obj.geometry = makeGeometry(obj.userData.type, newSegments);
-    if (oldGeom) oldGeom.dispose();
-    updateOutline(); markDirty();
-    const tris = obj.geometry.index ? obj.geometry.index.count / 3 : (obj.geometry.attributes.position ? obj.geometry.attributes.position.count / 3 : 0);
-    toast(`${obj.userData.name}: ${Math.round(tris)} полигонов`);
-}
-
-function getTriangleCount(obj) {
-    if (!obj || !obj.geometry) return 0;
-    if (obj.geometry.index) return obj.geometry.index.count / 3;
-    if (obj.geometry.attributes.position) return obj.geometry.attributes.position.count / 3;
-    return 0;
-}
-
-/* ==========================================================================
-   ВЫДЕЛЕНИЕ
-   ========================================================================== */
-
-function selectObject(obj, add = false) {
-    if (!add) selectedObjects.length = 0;
-    if (obj) {
-        if (add && selectedObjects.includes(obj)) selectedObjects.splice(selectedObjects.indexOf(obj), 1);
-        else selectedObjects.push(obj);
-    }
-    selected = selectedObjects.length > 0 ? selectedObjects[selectedObjects.length - 1] : null;
-    transform.detach();
-    if (selectedObjects.length === 1 && ['move', 'rotate', 'scale'].includes(currentTool)) {
-        transform.attach(selectedObjects[0]);
-        transform.setMode(currentTool === 'move' ? 'translate' : currentTool === 'rotate' ? 'rotate' : 'scale');
-    }
-    updateSelectionUI(); updateOutline(); rebuildTimeline();
-}
-
-function updateSelectionUI() {
-    document.querySelectorAll('.outliner-row').forEach(el => el.classList.remove('selected'));
-    selectedObjects.forEach(o => {
-        const el = document.querySelector(`.outliner-row[data-id="${o.id}"]`);
-        if (el) el.classList.add('selected');
-    });
-    const cnt = selectedObjects.length;
-    document.getElementById('stSel').textContent = `${cnt}/${objects.length}`;
-    const btnLook = document.getElementById('btnLookThrough');
-    const btnPlayE = document.getElementById('btnPlayEmbeddedAnim');
-    const btnStopE = document.getElementById('btnStopEmbeddedAnim');
-    if (btnLook) btnLook.style.display = 'none';
-    if (btnPlayE) btnPlayE.style.display = 'none';
-    if (btnStopE) btnStopE.style.display = 'none';
-
-    if (cnt === 0) {
-        document.getElementById('selText').textContent = 'Nothing selected';
-        document.getElementById('pName').value = '';
-        document.getElementById('pType').textContent = '—';
-        document.getElementById('polyGroup').style.display = 'none';
-    } else if (cnt === 1) {
-        const o = selectedObjects[0];
-        document.getElementById('selText').textContent = o.userData.name;
-        document.getElementById('pName').value = o.userData.name;
-        document.getElementById('pType').textContent = typeNames[o.userData.type] || o.userData.type || '—';
-        if (o.isMesh) {
-            document.getElementById('pVisible').checked = o.visible;
-            document.getElementById('pCastShadow').checked = o.castShadow;
-            document.getElementById('pReceiveShadow').checked = o.receiveShadow;
-            // Полигоны
-            if (o.userData.type !== 'imported') {
-                document.getElementById('polyGroup').style.display = 'block';
-                const seg = o.userData.segments || 32;
-                document.getElementById('pSegments').value = seg;
-                document.getElementById('pSegmentsV').textContent = seg;
-                document.getElementById('pPolyCount').textContent = Math.round(getTriangleCount(o));
-            } else document.getElementById('polyGroup').style.display = 'none';
-        }
-        if (o.userData.type === 'camera' && btnLook) btnLook.style.display = 'block';
-        if (o.userData.sourceAnimations && o.userData.sourceAnimations.length > 0) {
-            if (btnPlayE) btnPlayE.style.display = 'block';
-            if (btnStopE) btnStopE.style.display = 'block';
-        }
-        syncPropsFromSelection();
-        updatePhysicsUI();
-    } else {
-        document.getElementById('selText').textContent = `${cnt} objects selected`;
-        document.getElementById('polyGroup').style.display = 'none';
-    }
-}
-
-function selectAll() { selectedObjects.length = 0; objects.forEach(o => { if (o.visible) selectedObjects.push(o); }); selected = selectedObjects[0] || null; updateSelectionUI(); updateOutline(); rebuildTimeline(); }
-function deselectAll() { selectObject(null); }
-
-/* ==========================================================================
-   OUTLINER (СПИСОК ОБЪЕКТОВ)
-   ========================================================================== */
-
-function refreshOutliner() {
-    const el = document.getElementById('outliner');
-    el.innerHTML = '';
-    document.getElementById('stObj').textContent = objects.length;
-    document.getElementById('objCountBadge').textContent = objects.length;
-    const icons = { cube: '▢', sphere: '●', torus: '◎', cylinder: '⬭', cone: '▲', plane: '▭', light: '💡', spotlight: '🔦', camera: '🎥', imported: '📦' };
-    objects.forEach(o => {
-        const row = document.createElement('div');
-        row.className = 'outliner-row';
-        row.dataset.id = o.id;
-        row.innerHTML = `<span class="icon">${icons[o.userData.type] || '●'}</span><span class="name">${o.userData.name}</span><span class="eye" data-eye>${o.visible ? '👁' : '○'}</span>`;
-        row.querySelector('[data-eye]').onclick = e => { e.stopPropagation(); o.visible = !o.visible; row.querySelector('[data-eye]').textContent = o.visible ? '👁' : '○'; markDirty(); };
-        row.onclick = e => { if (e.shiftKey || e.ctrlKey || e.metaKey) selectObject(o, true); else selectObject(o, false); };
-        if (selectedObjects.includes(o)) row.classList.add('selected');
-        el.appendChild(row);
-    });
-}
-
-/* ==========================================================================
-   СИНХРОНИЗАЦИЯ UI И СВОЙСТВ
-   ========================================================================== */
-
-function syncPropsFromSelection() {
-    const o = selected;
-    const set = (id, v) => { const el = document.getElementById(id); if (!el) return; if (document.activeElement === el) return; el.value = v; };
-    if (!o) return;
-    set('pLocX', o.position.x.toFixed(3)); set('pLocY', o.position.y.toFixed(3)); set('pLocZ', o.position.z.toFixed(3));
-    set('pRotX', (o.rotation.x * 180 / Math.PI).toFixed(2));
-    set('pRotY', (o.rotation.y * 180 / Math.PI).toFixed(2));
-    set('pRotZ', (o.rotation.z * 180 / Math.PI).toFixed(2));
-    set('pSclX', o.scale.x.toFixed(3)); set('pSclY', o.scale.y.toFixed(3)); set('pSclZ', o.scale.z.toFixed(3));
-    if (o.isMesh) {
-        set('pColor', '#' + o.material.color.getHexString());
-        set('pMetal', o.material.metalness); document.getElementById('pMetalV').textContent = o.material.metalness.toFixed(2);
-        set('pRough', o.material.roughness); document.getElementById('pRoughV').textContent = o.material.roughness.toFixed(2);
-    }
-}
-
-/* ==========================================================================
-   ФОН (ИСПРАВЛЕННЫЙ)
-   ========================================================================== */
-
-let bgImageData = null;
-
-function applySceneBackground() {
-    const baseColor = document.getElementById('bgColorPicker').value;
-    const blur = parseFloat(document.getElementById('bgBlur').value) || 0;
-    document.getElementById('bgBlurV').textContent = blur;
-
-    if (!bgImageData) {
-        scene.background = new THREE.Color(baseColor);
-        return;
-    }
-    const img = bgImageData.img;
-    const canvas = document.createElement('canvas');
-    canvas.width = 1920; canvas.height = 1080;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = baseColor; ctx.fillRect(0, 0, 1920, 1080);
-    ctx.filter = `blur(${blur}px)`;
-    const s = Math.max(1920 / img.width, 1080 / img.height);
-    const dw = img.width * s, dh = img.height * s;
-    ctx.drawImage(img, (1920 - dw) / 2, (1080 - dh) / 2, dw, dh);
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    scene.background = tex;
-}
-
-document.getElementById('btnLoadBGImage').onclick = () => {
-    const input = document.createElement('input');
-    input.type = 'file'; input.accept = 'image/*';
-    input.onchange = e => {
-        const file = e.target.files[0]; if (!file) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-            const img = new Image();
-            img.onload = () => {
-                bgImageData = { img };
-                applySceneBackground();
-                toast('Фон загружен!', 'success');
-            };
-            img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-    };
-    input.click();
-};
-
-document.getElementById('bgColorPicker').oninput = () => { if (!bgImageData) applySceneBackground(); };
-document.getElementById('bgBlur').oninput = () => { if (bgImageData) applySceneBackground(); };
-document.getElementById('btnClearBGImage').onclick = () => { bgImageData = null; applySceneBackground(); toast('Фон сброшен'); };
-
-/* ==========================================================================
-   ИМПОРТ МОДЕЛЕЙ (С ФИКСОМ МАТЕРИАЛОВ)
-   ========================================================================== */
-
-function pickFile(accept) { return new Promise(resolve => { const input = document.createElement('input'); input.type = 'file'; input.accept = accept; input.onchange = () => resolve(input.files[0] || null); input.click(); }); }
-
-async function importModel() {
-    const file = await pickFile('.glb,.gltf,.obj,.stl,.fbx');
-    if (file) await importFile(file);
-}
-
-async function importFile(file) {
-    const ext = file.name.toLowerCase().split('.').pop();
-    showLoading('Загрузка ' + file.name + '…');
-    const url = URL.createObjectURL(file);
-    try {
-        let root = null, animations = null;
-        if (ext === 'glb' || ext === 'gltf') {
-            const loader = new GLTFLoader();
-            const result = await new Promise((res, rej) => loader.load(url, res, undefined, rej));
-            root = result.scene; animations = result.animations;
-        } else if (ext === 'obj') {
-            const loader = new OBJLoader();
-            root = await new Promise((res, rej) => loader.load(url, res, undefined, rej));
-        } else if (ext === 'fbx') {
-            const loader = new FBXLoader();
-            root = await new Promise((res, rej) => loader.load(url, res, undefined, rej));
-            animations = root.animations;
-        }
-        if (!root) { toast('Ошибка формата', 'error'); return; }
-        addImported(root, file.name, animations);
-    } catch (err) { console.error(err); toast('Ошибка: ' + err.message, 'error'); }
-    finally { URL.revokeObjectURL(url); hideLoading(); }
-}
-
-function addImported(root, name, animations) {
-    const box = new THREE.Box3().setFromObject(root);
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    let scale = 1;
-    if (maxDim > 10) scale = 10 / maxDim; else if (maxDim < 0.1 && maxDim > 0) scale = 1 / maxDim;
-    const center = box.getCenter(new THREE.Vector3());
-    root.position.sub(center.clone().multiplyScalar(scale));
-    root.position.y += (size.y * scale) / 2;
-    root.scale.setScalar(scale);
-
-    let meshCount = 0;
-    root.traverse(o => {
-        if (o.isMesh) {
-            meshCount++;
-            o.castShadow = true; o.receiveShadow = true; o.visible = true;
-            if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
-            if (!o.material) o.material = new THREE.MeshStandardMaterial({ color: 0xcccccc });
-            const mats = Array.isArray(o.material) ? o.material : [o.material];
-            mats.forEach(m => {
-                m.side = THREE.DoubleSide;
-                if (m.opacity !== undefined && m.opacity < 0.1) { m.opacity = 1; m.transparent = false; }
-                if (m.isMeshBasicMaterial) {
-                    const nm = new THREE.MeshStandardMaterial({ color: m.color ? m.color.getHex() : 0xcccccc, map: m.map || null, metalness: 0.1, roughness: 0.55, side: THREE.DoubleSide });
-                    if (Array.isArray(o.material)) o.material[0] = nm; else o.material = nm;
-                }
-                m.needsUpdate = true;
-            });
-        }
-    });
-    if (meshCount === 0) toast('⚠ В модели нет мешей!', 'error');
-
-    const baseName = name.replace(/\.[^.]+$/, '');
-    counters[baseName] = (counters[baseName] || 0) + 1;
-    root.userData.type = 'imported';
-    root.userData.name = `${baseName}.${String(counters[baseName]).padStart(3, '0')}`;
-    root.userData.animations = emptyAnim();
-    if (animations && animations.length > 0) {
-        root.userData.mixer = new THREE.AnimationMixer(root);
-        root.userData.mixerActions = animations.map(clip => { const a = root.userData.mixer.clipAction(clip); a.play(); return a; });
-        root.userData.autoAnim = true;
-    }
-    scene.add(root); objects.push(root); selectObject(root); refreshOutliner(); markDirty();
-    setTimeout(() => focusSelected(), 100);
-}
-    /* ==========================================================================
-   АНИМАЦИЯ (KEYFRAMES)
-   ========================================================================== */
-
-const anim = { current: 1, start: 1, end: 120, fps: 24, playing: false, lastTime: 0, acc: 0 };
-let recording = false;
-
-document.getElementById('btnRec').onclick = function() {
-    recording = !recording;
-    this.classList.toggle('on', recording);
-    toast(recording ? 'Auto-keyframe: ON' : 'Auto-keyframe: OFF');
-};
-
-function setFrame(f) {
-    f = Math.max(anim.start, Math.min(anim.end, Math.round(f)));
-    if (f === anim.current) return;
-    anim.current = f;
-    document.getElementById('fFrame').value = f;
-    document.getElementById('curFrame').textContent = f;
-    document.getElementById('stFrame').textContent = f;
-    applyAnim(f);
-    updatePlayhead();
-}
-
-function applyAnim(frame) {
-    objects.forEach(o => {
-        const a = o.userData.animations;
-        if (!a) return;
-        const p = sample(a.position, frame); if (p) o.position.set(p[0], p[1], p[2]);
-        const r = sample(a.rotation, frame); if (r) o.rotation.set(r[0], r[1], r[2]);
-        const s = sample(a.scale, frame); if (s) o.scale.set(s[0], s[1], s[2]);
-    });
-    updateOutline();
-    if (selectedObjects.length === 1) syncPropsFromSelection();
-}
-
-function sample(keys, frame) {
-    if (!keys || keys.length === 0) return null;
-    if (keys.length === 1) return keys[0].value;
-    if (frame <= keys[0].frame) return keys[0].value;
-    if (frame >= keys[keys.length - 1].frame) return keys[keys.length - 1].value;
-    for (let i = 0; i < keys.length - 1; i++) {
-        const a = keys[i], b = keys[i + 1];
-        if (frame >= a.frame && frame <= b.frame) {
-            const t = (frame - a.frame) / (b.frame - a.frame);
-            const e = t * t * (3 - 2 * t);
-            return a.value.map((v, idx) => v + (b.value[idx] - v) * e);
-        }
-    }
-    return keys[keys.length - 1].value;
-}
-
-function insertKeyframe(channel) {
-    if (selectedObjects.length === 0) { toast('Select object first', 'error'); return; }
-    const f = anim.current;
-    const channels = channel === 'all' ? ['position', 'rotation', 'scale'] : [channel];
-    selectedObjects.forEach(o => channels.forEach(ch => insertKeyChannel(o, ch, f)));
-    rebuildTimeline();
-    toast(`Keyframe @ ${f}`, 'success');
-    markDirty();
-}
-
-function insertKeyChannel(o, ch, f) {
-    const a = o.userData.animations;
-    if (!a[ch]) a[ch] = [];
-    let value;
-    if (ch === 'position') value = [o.position.x, o.position.y, o.position.z];
-    else if (ch === 'rotation') value = [o.rotation.x, o.rotation.y, o.rotation.z];
-    else if (ch === 'scale') value = [o.scale.x, o.scale.y, o.scale.z];
-    if (!value) return;
-    a[ch] = a[ch].filter(k => k.frame !== f);
-    a[ch].push({ frame: f, value });
-    a[ch].sort((x, y) => x.frame - y.frame);
-}
-
-function autoRecord() {
-    if (selectedObjects.length === 0 || !recording) return;
-    const f = anim.current;
-    selectedObjects.forEach(o => ['position', 'rotation', 'scale'].forEach(ch => insertKeyChannel(o, ch, f)));
-    rebuildTimeline();
-}
-
-function rebuildTimeline() {
-    const ruler = document.getElementById('timeline-ruler');
-    const keysEl = document.getElementById('timeline-keys');
-    ruler.innerHTML = ''; keysEl.innerHTML = '';
-    const track = document.getElementById('timeline-track');
-    const offset = 150;
-    const usable = Math.max(0, track.clientWidth - offset);
-    const total = Math.max(1, anim.end - anim.start);
-    const f2x = f => offset + ((f - anim.start) / total) * usable;
-    for (let f = anim.start; f <= anim.end; f += 10) {
-        const t = document.createElement('div');
-        t.className = 'ruler-tick'; t.style.left = f2x(f) + 'px'; t.textContent = f;
-        ruler.appendChild(t);
-    }
-    objects.forEach(o => {
-        const row = document.createElement('div'); row.className = 'keyframe-row';
-        const lbl = document.createElement('div');
-        lbl.className = 'keyframe-label' + (selectedObjects.includes(o) ? ' selected' : '');
-        lbl.textContent = (selectedObjects.includes(o) ? '▸ ' : '▹ ') + o.userData.name;
-        row.appendChild(lbl);
-        const cont = document.createElement('div'); cont.className = 'keyframe-content';
-        const allF = new Set();
-        Object.values(o.userData.animations).forEach(arr => arr.forEach(k => allF.add(k.frame)));
-        allF.forEach(f => {
-            const d = document.createElement('div'); d.className = 'keyframe-diamond'; d.style.left = f2x(f) + 'px';
-            d.onclick = e => { e.stopPropagation(); setFrame(f); };
-            cont.appendChild(d);
+document.getElementById('physEnabled').onchange = e => {
+    physEnabled = e.target.checked;
+    if (physEnabled) {
+        objects.forEach(o => {
+            const box = new THREE.Box3().setFromObject(o);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            const shape = new CANNON.Box(new CANNON.Vec3(size.x/2, size.y/2, size.z/2));
+            const body = new CANNON.Body({ mass: 1, shape: shape });
+            body.position.set(o.position.x, o.position.y, o.position.z);
+            world.addBody(body);
+            bodies.push({ mesh: o, body: body });
         });
-        row.appendChild(cont); keysEl.appendChild(row);
-    });
-    updatePlayhead();
-}
+        toast('Физика включена');
+    } else {
+        bodies.forEach(b => world.removeBody(b.body));
+        bodies.length = 0;
+        toast('Физика выключена');
+    }
+};
 
-function updatePlayhead() {
-    const track = document.getElementById('timeline-track');
-    const offset = 150;
-    const usable = track.clientWidth - offset;
-    const t = (anim.current - anim.start) / Math.max(1, anim.end - anim.start);
-    document.getElementById('playhead').style.left = (offset + t * usable) + 'px';
-}
-
-function togglePlay() {
-    anim.playing = !anim.playing;
-    anim.lastTime = performance.now();
-    const btn = document.getElementById('btnPlay');
-    btn.textContent = anim.playing ? '⏸' : '▶';
-    btn.classList.toggle('playing', anim.playing);
-    if (anim.playing && physicsBodies.length > 0) physConfig.enabled = true;
-}
-
-document.getElementById('btnPlay').onclick = togglePlay;
-document.getElementById('fFrame').onchange = e => setFrame(parseInt(e.target.value));
-document.getElementById('fFps').onchange = e => anim.fps = parseInt(e.target.value);
-document.getElementById('timeline-track').addEventListener('mousedown', e => {
-    if (e.target.closest('.keyframe-diamond')) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const offset = 150; const usable = rect.width - offset;
-    if (x < offset) return;
-    setFrame(anim.start + ((x - offset) / usable) * (anim.end - anim.start));
-});
+document.getElementById('objPhysKick').onclick = () => {
+    if (!selectedObject) return;
+    const b = bodies.find(x => x.mesh === selectedObject);
+    if (b) {
+        b.body.velocity.set(0, 8, 0);
+        b.body.angularVelocity.set(Math.random()*4-2, Math.random()*4-2, Math.random()*4-2);
+    } else {
+        toast('Включите физику!');
+    }
+};
 
 /* ==========================================================================
-   UI ФИЗИКИ (ПРИВЯЗКА)
+   UI ПРИВЯЗКА (ИНПУТЫ)
    ========================================================================== */
-
-function updatePhysicsUI() {
-    document.getElementById('physEnabled').checked = physConfig.enabled;
-    document.getElementById('physGravity').value = physConfig.gravity.y;
-    document.getElementById('physGravityV').textContent = physConfig.gravity.y.toFixed(1);
-    
-    if (selectedObjects.length === 0) { document.getElementById('physObjInfo').textContent = 'Ничего не выделено'; return; }
-    const o = selectedObjects[0];
-    if (!o.isMesh) return;
-    const hasPhys = !!o.userData.physicsBody;
-    document.getElementById('physObjInfo').textContent = o.userData.name + (hasPhys ? ' · ВКЛ' : ' · ВЫКЛ');
-    document.getElementById('objPhysEnabled').checked = hasPhys;
-    document.getElementById('objPhysMass').value = o.userData.physicsMass || 1;
-    document.getElementById('objPhysMassV').textContent = (o.userData.physicsMass || 1).toFixed(1);
-}
-
-document.getElementById('physEnabled').onchange = e => { physConfig.enabled = e.target.checked; };
-document.getElementById('physGravity').oninput = e => { physConfig.gravity.y = parseFloat(e.target.value); document.getElementById('physGravityV').textContent = physConfig.gravity.y.toFixed(1); };
-document.getElementById('objPhysEnabled').onchange = e => { if (selectedObjects.length === 0) return; if (e.target.checked) selectedObjects.forEach(o => o.isMesh && enablePhysics(o)); else selectedObjects.forEach(o => o.isMesh && disablePhysics(o)); updatePhysicsUI(); };
-document.getElementById('objPhysMass').oninput = e => { const v = parseFloat(e.target.value); document.getElementById('objPhysMassV').textContent = v.toFixed(1); selectedObjects.forEach(o => { o.userData.physicsMass = v; if (o.userData.physicsBody) { o.userData.physicsBody.mass = v; o.userData.physicsBody.updateMassProperties(); } }); };
-document.getElementById('objPhysKick').onclick = () => { selectedObjects.forEach(o => { if (o.userData.physicsBody) { o.userData.physicsBody.velocity.set(0, 8, 0); o.userData.physicsBody.angularVelocity.set(Math.random() * 4 - 2, 0, 0); } }); };
-document.getElementById('objPhysRemove').onclick = () => { selectedObjects.forEach(o => o.isMesh && disablePhysics(o)); updatePhysicsUI(); };
-document.getElementById('physReset').onclick = () => { physConfig.gravity = { x: 0, y: -9.82, z: 0 }; updatePhysicsUI(); };
-document.getElementById('physKillAll').onclick = () => { physicsBodies.forEach(({ body }) => { body.velocity.set(0, 0, 0); body.angularVelocity.set(0, 0, 0); }); };
-
-/* ==========================================================================
-   СОХРАНЕНИЕ / ЗАГРУЗКА
-   ========================================================================== */
-
-function serialize() {
-    return {
-        version: '7.0',
-        name: document.getElementById('filename').textContent,
-        anim: { current: anim.current, start: anim.start, end: anim.end, fps: anim.fps },
-        camera: { pos: camera.position.toArray(), target: orbit.target.toArray() },
-        phys: JSON.parse(JSON.stringify(physConfig)),
-        objects: objects.map(o => ({
-            type: o.userData.type, name: o.userData.name,
-            pos: o.position.toArray(), rot: [o.rotation.x, o.rotation.y, o.rotation.z], scl: o.scale.toArray(),
-            segments: o.userData.segments || 32,
-            color: o.isMesh ? o.material.color.getHex() : 0,
-            metal: o.isMesh ? o.material.metalness : 0,
-            rough: o.isMesh ? o.material.roughness : 0,
-            animations: JSON.parse(JSON.stringify(o.userData.animations)),
-            physicsEnabled: !!o.userData.physicsEnabled,
-            physicsMass: o.userData.physicsMass || 1
-        }))
+function bindPos(id, axis) {
+    document.getElementById(id).oninput = e => {
+        if (selectedObject) selectedObject.position[axis] = parseFloat(e.target.value) || 0;
     };
 }
+bindPos('pLocX', 'x'); bindPos('pLocY', 'y'); bindPos('pLocZ', 'z');
 
-function applyData(data) {
-    objects.slice().forEach(o => { scene.remove(o); if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
-    objects.length = 0; selectedObjects.length = 0; selected = null; physicsBodies.length = 0;
-    Object.keys(counters).forEach(k => delete counters[k]);
-    if (data.camera) {
-        camera.position.fromArray(data.camera.pos); orbit.target.fromArray(data.camera.target);
-        orbit.radius = camera.position.distanceTo(orbit.target); orbit.update();
-    }
-    (data.objects || []).forEach(od => {
-        const obj = addObject(od.type, { color: od.color, segments: od.segments });
-        obj.position.fromArray(od.pos); obj.rotation.set(...od.rot); obj.scale.fromArray(od.scl);
-        obj.userData.animations = od.animations;
-        if (od.physicsEnabled && obj.isMesh) enablePhysics(obj);
-    });
-    selectObject(null); refreshOutliner(); rebuildTimeline();
+function bindRot(id, axis) {
+    document.getElementById(id).oninput = e => {
+        if (selectedObject) selectedObject.rotation[axis] = (parseFloat(e.target.value) || 0) * Math.PI / 180;
+    };
 }
+bindRot('pRotX', 'x'); bindRot('pRotY', 'y'); bindRot('pRotZ', 'z');
 
-document.querySelectorAll('[data-act="save"]').forEach(b => b.onclick = () => {
-    const blob = new Blob([JSON.stringify(serialize(), null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'scene.blend.json'; a.click();
-    toast('Сохранено');
-});
-document.querySelectorAll('[data-act="open"]').forEach(b => b.onclick = () => {
-    const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
-    input.onchange = e => { const f = e.target.files[0]; const r = new FileReader(); r.onload = ev => applyData(JSON.parse(ev.target.result)); r.readAsText(f); };
-    input.click();
-});
-document.querySelectorAll('[data-act="render"]').forEach(b => b.onclick = () => {
-    renderer.render(scene, camera);
-    const a = document.createElement('a'); a.href = renderer.domElement.toDataURL(); a.download = 'render.png'; a.click();
+function bindScl(id, axis) {
+    document.getElementById(id).oninput = e => {
+        if (selectedObject) selectedObject.scale[axis] = parseFloat(e.target.value) || 1;
+    };
+}
+bindScl('pSclX', 'x'); bindScl('pSclY', 'y'); bindScl('pSclZ', 'z');
+
+document.getElementById('pName').oninput = e => {
+    if (selectedObject) {
+        selectedObject.userData.name = e.target.value;
+        refreshOutliner();
+        document.getElementById('selText').textContent = e.target.value;
+    }
+};
+
+document.getElementById('pColor').oninput = e => {
+    if (selectedObject && selectedObject.material) selectedObject.material.color.set(e.target.value);
+};
+
+document.getElementById('pMetal').oninput = e => {
+    if (selectedObject && selectedObject.material) {
+        selectedObject.material.metalness = parseFloat(e.target.value);
+        document.getElementById('pMetalV').textContent = e.target.value;
+    }
+};
+
+document.getElementById('pRough').oninput = e => {
+    if (selectedObject && selectedObject.material) {
+        selectedObject.material.roughness = parseFloat(e.target.value);
+        document.getElementById('pRoughV').textContent = e.target.value;
+    }
+};
+
+document.getElementById('pSegments').oninput = e => {
+    if (!selectedObject || selectedObject.userData.type === 'imported') return;
+    const seg = parseInt(e.target.value);
+    document.getElementById('pSegmentsV').textContent = seg;
+    const newGeo = makeGeometry(selectedObject.userData.type, seg);
+    selectedObject.geometry.dispose();
+    selectedObject.geometry = newGeo;
+    
+    let tris = 0;
+    if (newGeo.index) tris = newGeo.index.count / 3;
+    else if (newGeo.attributes.position) tris = newGeo.attributes.position.count / 3;
+    document.getElementById('pPolyCount').textContent = Math.round(tris);
+};
+
+/* ==========================================================================
+   ФОН
+   ========================================================================== */
+document.getElementById('bgColorPicker').oninput = e => {
+    scene.background = new THREE.Color(e.target.value);
+};
+
+document.getElementById('bgFile').onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const tex = new THREE.TextureLoader().load(ev.target.result);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        scene.background = tex;
+        toast('Фон загружен!');
+    };
+    reader.readAsDataURL(file);
+};
+
+document.getElementById('btnClearBG').onclick = () => {
+    scene.background = new THREE.Color(document.getElementById('bgColorPicker').value);
+    toast('Фон сброшен');
+};
+
+/* ==========================================================================
+   ИМПОРТ МОДЕЛЕЙ
+   ========================================================================== */
+document.querySelectorAll('[data-act="import-model"]').forEach(el => {
+    el.onclick = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.glb,.gltf';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const loader = new GLTFLoader();
+            const url = URL.createObjectURL(file);
+            
+            loader.load(url, gltf => {
+                const root = gltf.scene;
+                const box = new THREE.Box3().setFromObject(root);
+                const size = box.getSize(new THREE.Vector3());
+                const scale = 2 / Math.max(size.x, size.y, size.z);
+                root.scale.setScalar(scale);
+                root.position.y = 1;
+                
+                root.traverse(c => {
+                    if (c.isMesh) {
+                        c.castShadow = true;
+                        c.receiveShadow = true;
+                        if (!c.material || c.material.type === 'MeshBasicMaterial') {
+                            c.material = new THREE.MeshStandardMaterial({ 
+                                color: 0xcccccc, 
+                                map: c.material?.map || null,
+                                side: THREE.DoubleSide 
+                            });
+                        }
+                    }
+                });
+
+                counters['imported'] = (counters['imported'] || 0) + 1;
+                root.userData = { type: 'imported', name: `Model.${counters['imported']}` };
+                
+                scene.add(root);
+                objects.push(root);
+                selectObject(root);
+                toast('Модель загружена');
+            });
+        };
+        input.click();
+    };
 });
 
 /* ==========================================================================
-   МЕНЮ, ТУЛБАР, ГОРЯЧИЕ КЛАВИШИ
+   RAYCAST (ВЫДЕЛЕНИЕ КЛИКОМ)
    ========================================================================== */
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
+renderer.domElement.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(objects, true);
+    
+    if (hits.length > 0) {
+        let hit = hits[0].object;
+        while (hit.parent && !objects.includes(hit)) hit = hit.parent;
+        selectObject(hit);
+    } else {
+        selectObject(null);
+    }
+});
+
+/* ==========================================================================
+   МЕНЮ И ТАБЫ
+   ========================================================================== */
 document.querySelectorAll('.menu-btn').forEach(btn => {
-    btn.onclick = e => { if (e.target.closest('.menu-item')) return; const was = btn.classList.contains('open'); document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open')); if (!was) btn.classList.add('open'); e.stopPropagation(); };
+    btn.onclick = e => {
+        if (e.target.closest('.menu-item')) return;
+        const was = btn.classList.contains('open');
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open'));
+        if (!was) btn.classList.add('open');
+        e.stopPropagation();
+    };
+});
+document.addEventListener('click', () => {
+    document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open'));
 });
 document.querySelectorAll('.menu-item').forEach(item => {
-    item.onclick = e => { e.stopPropagation(); const act = item.dataset.act; if (act && act.startsWith('add:')) addObject(act.split(':')[1]); if (act === 'new') { objects.slice().forEach(o => scene.remove(o)); objects.length = 0; addObject('cube'); } document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open')); };
+    item.onclick = e => {
+        e.stopPropagation();
+        const act = item.dataset.act;
+        if (act && act.startsWith('add:')) addObject(act.split(':')[1]);
+        if (act === 'new') { 
+            objects.slice().forEach(o => scene.remove(o)); 
+            objects.length = 0; 
+            addObject('cube'); 
+            selectObject(null);
+        }
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open'));
+    };
 });
 
-document.querySelectorAll('.tool-btn').forEach(btn => {
-    btn.onclick = () => { const t = btn.dataset.tool; if (t === 'add') document.getElementById('addModal').classList.add('open'); else if (t === 'import') importModel(); else if (t === 'dup') duplicateSelected(); else if (t === 'del') deleteSelected(); else if (t === 'key') insertKeyframe('all'); else { currentTool = t; } };
+document.querySelectorAll('.tab-btn').forEach(tab => {
+    tab.onclick = () => {
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelector(`[data-tab-content="${tab.dataset.tab}"]`).classList.add('active');
+    };
 });
 
-window.addEventListener('keydown', e => {
-    if (e.target.tagName === 'INPUT') return;
-    if (e.key === ' ') { e.preventDefault(); togglePlay(); }
-    if (e.key === 'w') currentTool = 'select';
-    if (e.key === 'g') currentTool = 'move';
-    if (e.key === 'r') currentTool = 'rotate';
-    if (e.key === 's') currentTool = 'scale';
-    if (e.key === 'i') insertKeyframe('all');
+document.querySelectorAll('.add-item').forEach(item => {
+    item.onclick = () => {
+        addObject(item.dataset.add);
+        document.getElementById('addModal').classList.remove('open');
+    };
 });
+
+document.getElementById('addModal').onclick = (e) => {
+    if (e.target.id === 'addModal') e.target.classList.remove('open');
+};
 
 /* ==========================================================================
-   СТАРТ И РЕНДЕР-ЛУП
+   ТАЙМЛАЙН
    ========================================================================== */
+let frame = 1;
+let playing = false;
 
-function resize() {
-    const w = viewportEl.clientWidth, h = viewportEl.clientHeight;
-    camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h);
-    document.getElementById('info-br').textContent = `${w}x${h}`; rebuildTimeline();
-}
-window.addEventListener('resize', resize);
+document.getElementById('btnPlay').onclick = function() {
+    playing = !playing;
+    this.classList.toggle('playing', playing);
+    this.textContent = playing ? '⏸' : '▶';
+};
 
-resize(); addObject('cube'); selectObject(null); redrawGizmo(); clearDirty(); rebuildTimeline();
+document.getElementById('fFrame').oninput = e => {
+    frame = parseInt(e.target.value) || 1;
+    document.getElementById('curFrame').textContent = frame;
+    document.getElementById('stFrame').textContent = frame;
+    document.getElementById('playhead').style.left = ((frame - 1) * 10) + 'px';
+};
 
-let lastTime = performance.now(), frames = 0, fpsTime = 0;
+/* ==========================================================================
+   РЕНДЕР-ЛУП
+   ========================================================================== */
+let lastTime = performance.now();
+let fpsTimer = 0, framesCount = 0;
+
 function loop() {
     requestAnimationFrame(loop);
     const now = performance.now();
     const dt = (now - lastTime) / 1000;
-    
-    updatePhysics(dt);
-    
-    if (anim.playing) {
-        anim.acc += dt;
-        if (anim.acc > 0.1) { anim.acc = 0; stepFrame(1); }
+    lastTime = now;
+
+    // Физика
+    if (physEnabled && bodies.length > 0) {
+        world.step(1/60, dt, 3);
+        bodies.forEach(b => {
+            b.mesh.position.copy(b.body.position);
+            b.mesh.quaternion.copy(b.body.quaternion);
+        });
+    }
+
+    // Таймлайн
+    if (playing) {
+        frame++;
+        if (frame > 120) frame = 1;
+        document.getElementById('fFrame').value = frame;
+        document.getElementById('curFrame').textContent = frame;
+        document.getElementById('playhead').style.left = ((frame - 1) * 10) + 'px';
+    }
+
+    // Ресайз
+    if (renderer.domElement.width !== viewportEl.clientWidth || renderer.domElement.height !== viewportEl.clientHeight) {
+        renderer.setSize(viewportEl.clientWidth, viewportEl.clientHeight, false);
+        camera.aspect = viewportEl.clientWidth / viewportEl.clientHeight;
+        camera.updateProjectionMatrix();
     }
 
     renderer.render(scene, camera);
-    
-    frames++; fpsTime += now - lastTime; lastTime = now;
-    if (fpsTime > 500) { document.getElementById('stFps').textContent = Math.round(frames / (fpsTime / 1000)); frames = 0; fpsTime = 0; }
+
+    // FPS
+    framesCount++;
+    fpsTimer += dt;
+    if (fpsTimer > 0.5) {
+        document.getElementById('stFps').textContent = Math.round(framesCount / fpsTimer);
+        framesCount = 0;
+        fpsTimer = 0;
+    }
 }
+
+/* ==========================================================================
+   СТАРТ
+   ========================================================================== */
+orbit.update();
+redrawGizmo();
+addObject('cube');
+addObject('plane');
+selectObject(null);
 loop();
 
-function stepFrame(d) { let f = anim.current + d; if (f > anim.end) f = anim.start; setFrame(f); }
-
-console.log('Blender Web Ultimate Loaded!');
+console.log('Blender Web Ultimate успешно запущен!');
 </script>
 </body>
 </html>
