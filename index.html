@@ -3,1727 +3,634 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blender Web Ultimate - Full Edition</title>
-
-    <style>
-        /* ==========================================================================
-           1. СБРОС СТИЛЕЙ (CSS RESET)
-           ========================================================================== */
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        /* ==========================================================================
-           2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ (CSS VARIABLES)
-           ========================================================================== */
-        
-        :root {
-            /* --- Цвета фона --- */
-            --bg-darkest: #141414;
-            --bg-dark: #1a1a1a;
-            --bg-panel: #222222;
-            --bg-panel-light: #2b2b2b;
-            --bg-header: #333333;
-            --bg-hover: #404040;
-            --bg-active: #454545;
-            
-            /* --- Цвета границ --- */
-            --border-main: #111111;
-            --border-light: #3a3a3a;
-            
-            /* --- Акцентные цвета --- */
-            --accent: #e87d0d;
-            --accent-hover: #ff9428;
-            --accent-dim: #b85f08;
-            
-            /* --- Цвета текста --- */
-            --text-main: #cccccc;
-            --text-dim: #888888;
-            --text-bright: #ffffff;
-            
-            /* --- Цвета осей --- */
-            --axis-x: #e5484d;
-            --axis-y: #6ab04c;
-            --axis-z: #4b7bd9;
-            
-            /* --- Статусные цвета --- */
-            --green: #6ab04c;
-            --red: #d94b4b;
-            --keyframe-color: #e8a10d;
-            
-            /* --- Шрифты --- */
-            --font-ui: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            --font-mono: 'Consolas', 'Courier New', monospace;
-        }
-
-        /* ==========================================================================
-           3. БАЗОВЫЕ СТИЛИ ДОКУМЕНТА
-           ========================================================================== */
-        
-        html, 
-        body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: var(--font-ui);
-            font-size: 12px;
-            background-color: var(--bg-darkest);
-            color: var(--text-main);
-            user-select: none;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* ==========================================================================
-           4. СТИЛИ ДЛЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
-           ========================================================================== */
-        
-        button {
-            font-family: inherit;
-            font-size: inherit;
-            color: inherit;
-            cursor: pointer;
-            border: none;
-            background: none;
-            outline: none;
-        }
-
-        input, 
-        select {
-            font-family: inherit;
-            font-size: inherit;
-        }
-
-        /* ==========================================================================
-           5. КАСТОМНЫЕ СКРОЛЛБАРЫ
-           ========================================================================== */
-        
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-dark);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #444444;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555555;
-        }
-
-        /* ==========================================================================
-           6. СЕТКА ПРИЛОЖЕНИЯ (GRID LAYOUT)
-           ========================================================================== */
-        
-        #app {
-            display: grid;
-            grid-template-columns: 1fr 340px;
-            grid-template-rows: 26px 30px 1fr 200px 22px;
-            grid-template-areas:
-                "titlebar titlebar"
-                "menubar menubar"
-                "viewport right-panel"
-                "timeline right-panel"
-                "statusbar statusbar";
-            width: 100vw;
-            height: 100vh;
-        }
-
-        /* ==========================================================================
-           7. ЗАГОЛОВОК ОКНА (TITLE BAR)
-           ========================================================================== */
-        
-        #titlebar {
-            grid-area: titlebar;
-            background-color: var(--bg-dark);
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            border-bottom: 1px solid var(--border-main);
-            font-size: 11px;
-            color: var(--text-dim);
-        }
-
-        #titlebar .logo {
-            color: var(--accent);
-            font-weight: 700;
-            margin-right: 8px;
-            font-size: 14px;
-        }
-
-        #titlebar .fname {
-            color: var(--text-main);
-        }
-
-        #titlebar .fname.dirty::after {
-            content: ' *';
-            color: var(--accent);
-        }
-
-        #titlebar .spacer {
-            flex: 1;
-        }
-
-        /* ==========================================================================
-           8. ГЛАВНОЕ МЕНЮ (MENU BAR)
-           ========================================================================== */
-        
-        #menubar {
-            grid-area: menubar;
-            background-color: var(--bg-panel);
-            display: flex;
-            align-items: center;
-            padding: 0 6px;
-            border-bottom: 1px solid var(--border-main);
-            z-index: 100;
-        }
-
-        .menu-btn {
-            padding: 0 12px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            position: relative;
-            border-radius: 3px;
-            transition: background 0.1s;
-        }
-
-        .menu-btn:hover {
-            background-color: var(--bg-hover);
-        }
-
-        .menu-btn.open {
-            background-color: var(--accent);
-            color: #ffffff;
-        }
-
-        .menu-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            min-width: 220px;
-            background-color: var(--bg-header);
-            border: 1px solid var(--border-main);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
-            display: none;
-            padding: 4px 0;
-            z-index: 1000;
-            border-radius: 0 0 4px 4px;
-        }
-
-        .menu-btn.open .menu-dropdown {
-            display: block;
-        }
-
-        .menu-item {
-            padding: 6px 16px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            gap: 24px;
-            white-space: nowrap;
-        }
-
-        .menu-item:hover {
-            background-color: var(--accent);
-            color: #ffffff;
-        }
-
-        .menu-item .shortcut {
-            color: var(--text-dim);
-            font-size: 10px;
-            font-family: var(--font-mono);
-        }
-
-        .menu-item:hover .shortcut {
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .menu-sep {
-            height: 1px;
-            background-color: var(--border-light);
-            margin: 4px 0;
-        }
-
-        #menubar .spacer {
-            flex: 1;
-        }
-
-        /* ==========================================================================
-           9. 3D-ВЬЮПОРТ (VIEWPORT)
-           ========================================================================== */
-        
-        #viewport {
-            grid-area: viewport;
-            position: relative;
-            background-color: #3a3a3a;
-            overflow: hidden;
-            border-right: 1px solid var(--border-main);
-        }
-
-        #viewport canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Оверлей при перетаскивании файла */
-        #viewport.dragover::after {
-            content: 'Отпусти файл — модель загрузится';
-            position: absolute;
-            inset: 20px;
-            border: 3px dashed var(--accent);
-            border-radius: 12px;
-            background: rgba(232, 125, 13, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: #ffffff;
-            font-weight: 600;
-            z-index: 999;
-            pointer-events: none;
-            text-shadow: 0 2px 8px #000000;
-        }
-
-        /* Информационные надписи поверх 3D */
-        .vp-info {
-            position: absolute;
-            pointer-events: none;
-            font-size: 11px;
-            color: #dddddd;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-            z-index: 5;
-        }
-
-        #info-tl {
-            top: 10px;
-            left: 10px;
-            line-height: 1.6;
-        }
-
-        #info-tl .mode {
-            color: var(--accent);
-            font-weight: bold;
-        }
-
-        #info-bl {
-            bottom: 10px;
-            left: 10px;
-            color: #999999;
-            font-size: 10px;
-        }
-
-        #info-br {
-            bottom: 10px;
-            right: 110px;
-            color: #999999;
-            font-size: 10px;
-            font-family: var(--font-mono);
-        }
-
-        /* ==========================================================================
-           10. ПАНЕЛЬ ИНСТРУМЕНТОВ (СЛЕВА)
-           ========================================================================== */
-        
-        #tools {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            z-index: 6;
-        }
-
-        .tool-btn {
-            width: 34px;
-            height: 34px;
-            background: rgba(30, 30, 30, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 4px;
-            color: #cccccc;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.12s;
-        }
-
-        .tool-btn:hover {
-            background: rgba(70, 70, 70, 0.9);
-        }
-
-        .tool-btn.active {
-            background-color: var(--accent);
-            color: #ffffff;
-            border-color: var(--accent);
-        }
-
-        .tool-btn.rec {
-            background-color: #5c1a1a;
-            color: #ff8888;
-            border-color: #8a3a3a;
-        }
-
-        .tool-btn.rec.on {
-            background-color: var(--red);
-            color: #ffffff;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-    </style>
+    <title>Blender Web Ultimate</title>
 </head>
-        /* ==========================================================================
-           11. НАВИГАЦИОННЫЙ ГИЗМО (ОСИ СПРАВА СНИЗУ)
-           ========================================================================== */
-        
-        #nav-gizmo {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 100px;
-            height: 100px;
-            z-index: 7;
-            cursor: grab;
-            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
-        }
+<body>
 
-        #nav-gizmo:active {
-            cursor: grabbing;
-        }
-
-        /* ==========================================================================
-           12. РАМКА ВЫДЕЛЕНИЯ (BOX SELECT)
-           ========================================================================== */
-        
-        #sel-box {
-            position: absolute;
-            border: 1px solid var(--accent);
-            background: rgba(232, 125, 13, 0.15);
-            display: none;
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        /* ==========================================================================
-           13. ПРАВАЯ ПАНЕЛЬ (OUTLINER + PROPERTIES)
-           ========================================================================== */
-        
-        #right-panel {
-            grid-area: right-panel;
-            background-color: var(--bg-panel);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .panel-header {
-            background-color: var(--bg-header);
-            padding: 5px 10px;
-            font-size: 10px;
-            font-weight: 600;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            border-bottom: 1px solid var(--border-main);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            min-height: 22px;
-        }
-
-        .panel-header:hover {
-            background-color: var(--bg-hover);
-        }
-
-        /* Список объектов */
-        #outliner {
-            max-height: 150px;
-            overflow-y: auto;
-            padding: 3px 0;
-            border-bottom: 1px solid var(--border-main);
-            flex-shrink: 0;
-        }
-
-        .outliner-row {
-            padding: 4px 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            border-left: 2px solid transparent;
-            transition: background 0.08s;
-        }
-
-        .outliner-row:hover {
-            background-color: var(--bg-hover);
-        }
-
-        .outliner-row.selected {
-            background-color: var(--accent) !important;
-            color: #ffffff !important;
-        }
-
-        /* Иконки и названия в Outliner */
-        .outliner-row .icon {
-            width: 14px;
-            text-align: center;
-            font-size: 11px;
-        }
-
-        .outliner-row .name {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .outliner-row .eye {
-            color: var(--text-dim);
-            font-size: 11px;
-            padding: 0 3px;
-            cursor: pointer;
-            opacity: 0.6;
-        }
-
-        .outliner-row:hover .eye {
-            opacity: 1;
-        }
-
-        /* ==========================================================================
-           14. ВКЛАДКИ (TABS)
-           ========================================================================== */
-        
-        .tab-bar {
-            display: flex;
-            background-color: var(--bg-header);
-            border-bottom: 1px solid var(--border-main);
-            padding: 0 4px;
-            gap: 2px;
-            flex-shrink: 0;
-            overflow-x: auto;
-        }
-
-        .tab-btn {
-            flex: 1;
-            min-width: 36px;
-            padding: 8px 4px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--text-dim);
-            border-bottom: 2px solid transparent;
-            transition: all 0.15s;
-        }
-
-        .tab-btn:hover {
-            color: var(--text-main);
-            background-color: var(--bg-hover);
-        }
-
-        .tab-btn.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-        }
-
-        /* Контент свойств */
-        #properties {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* ==========================================================================
-           15. ГРУППЫ СВОЙСТВ
-           ========================================================================== */
-        
-        .prop-group {
-            background-color: var(--bg-header);
-            border: 1px solid var(--border-light);
-            border-radius: 4px;
-            margin-bottom: 6px;
-            overflow: hidden;
-        }
-
-        .prop-group-header {
-            padding: 6px 10px;
-            font-size: 10px;
-            font-weight: 600;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: var(--bg-hover);
-        }
-
-        .prop-group-body {
-            padding: 8px 10px;
-        }
-
-        /* ==========================================================================
-           16. СТРОКИ ВВОДА (PROP ROWS)
-           ========================================================================== */
-        
-        .prop-row {
-            display: grid;
-            grid-template-columns: 80px 1fr;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 5px;
-            min-height: 22px;
-        }
-
-        .prop-row > label {
-            font-size: 11px;
-            color: var(--text-dim);
-        }
-
-        .prop-row > .fields {
-            display: flex;
-            gap: 3px;
-            align-items: center;
-        }
-
-        /* ==========================================================================
-           17. БЛОКИ ВВОДА (INPUT FIELDS)
-           ========================================================================== */
-        
-        .input-field {
-            flex: 1;
-            min-width: 0;
-            height: 22px;
-            background-color: var(--bg-dark);
-            border: 1px solid var(--border-light);
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            transition: border-color 0.1s;
-        }
-
-        .input-field:focus-within {
-            border-color: var(--accent);
-        }
-
-        .input-field.keyed {
-            border-color: var(--keyframe-color);
-            background-color: #2a2210;
-        }
-
-        .input-field .axis-tag {
-            font-size: 10px;
-            font-weight: 700;
-            padding: 0 5px;
-            cursor: ew-resize;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            border-right: 1px solid var(--border-light);
-        }
-
-        .input-field .axis-tag.x { color: var(--axis-x); }
-        .input-field .axis-tag.y { color: var(--axis-y); }
-        .input-field .axis-tag.z { color: var(--axis-z); }
-
-        .input-field input,
-        .input-field select {
-            flex: 1;
-            min-width: 0;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--text-main);
-            padding: 0 6px;
-            font-size: 11px;
-            font-family: var(--font-mono);
-            height: 100%;
-        }
-
-        .input-field select {
-            cursor: pointer;
-            padding: 0 3px;
-        }
-
-        .input-field select option {
-            background-color: var(--bg-panel);
-            color: var(--text-main);
-        }
-
-        /* Убираем стрелочки у number */
-        .input-field input[type="number"]::-webkit-inner-spin-button,
-        .input-field input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .input-field input[type="color"] {
-            padding: 0 3px;
-            height: 100%;
-        }
-
-        /* ==========================================================================
-           18. ПОЛЗУНКИ (SLIDERS)
-           ========================================================================== */
-        
-        input[type="range"] {
-            flex: 1;
-            -webkit-appearance: none;
-            background-color: var(--bg-dark);
-            border-radius: 2px;
-            height: 4px;
-            outline: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
-            background-color: var(--accent);
-            border-radius: 50%;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-
-        input[type="range"]::-webkit-slider-thumb:hover {
-            background-color: var(--accent-hover);
-        }
-
-        .value-label {
-            width: 38px;
-            text-align: right;
-            font-size: 10px;
-            color: var(--text-dim);
-            font-family: var(--font-mono);
-        }
-
-        /* ==========================================================================
-           19. ЧЕКБОКСЫ И КНОПКИ
-           ========================================================================== */
-        
-        .check-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 0;
-            font-size: 11px;
-            cursor: pointer;
-        }
-
-        .check-row input {
-            accent-color: var(--accent);
-            cursor: pointer;
-        }
-
-        .btn-row {
-            display: flex;
-            gap: 4px;
-            margin-top: 6px;
-            flex-wrap: wrap;
-        }
-
-        .btn-sm {
-            padding: 4px 10px;
-            background-color: var(--bg-dark);
-            border: 1px solid var(--border-light);
-            border-radius: 3px;
-            font-size: 11px;
-            transition: background 0.12s;
-        }
-
-        .btn-sm:hover {
-            background-color: var(--bg-hover);
-        }
-
-        .btn-sm.primary {
-            background-color: var(--accent);
-            color: #ffffff;
-            border-color: var(--accent);
-        }
-
-        .btn-sm.danger {
-            background-color: #5c1a1a;
-            color: #ff9999;
-            border-color: #8a3a3a;
-        }
-
-        /* ==========================================================================
-           20. ТАЙМЛАЙН
-           ========================================================================== */
-        
-        #timeline {
-            grid-area: timeline;
-            background-color: var(--bg-panel);
-            border-top: 1px solid var(--border-main);
-            border-right: 1px solid var(--border-main);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        #timeline-controls {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 5px 8px;
-            background-color: var(--bg-header);
-            border-bottom: 1px solid var(--border-main);
-            font-size: 11px;
-            flex-wrap: wrap;
-        }
-
-        .tl-btn {
-            background-color: var(--bg-dark);
-            border: 1px solid var(--border-light);
-            color: var(--text-main);
-            min-width: 30px;
-            height: 24px;
-            padding: 0 8px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            transition: all 0.1s;
-        }
-
-        .tl-btn:hover {
-            background-color: var(--bg-hover);
-        }
-
-        .tl-btn.playing {
-            background-color: var(--green);
-            color: #ffffff;
-            border-color: #3d8b40;
-        }
-
-        .tl-btn.rec {
-            background-color: #5c1a1a;
-            color: #ff8888;
-            border-color: #8a3a3a;
-        }
-
-        .tl-btn.rec.on {
-            background-color: var(--red);
-            color: #ffffff;
-        }
-
-        .tl-field {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            color: var(--text-dim);
-            font-size: 11px;
-        }
-
-        .tl-field input {
-            background-color: var(--bg-dark);
-            border: 1px solid var(--border-light);
-            color: var(--text-main);
-            padding: 2px 6px;
-            border-radius: 3px;
-            width: 55px;
-            font-size: 11px;
-            font-family: var(--font-mono);
-            outline: none;
-        }
-
-        .tl-field input:focus {
-            border-color: var(--accent);
-        }
-
-        #curFrame {
-            color: var(--accent);
-            font-weight: bold;
-            font-family: var(--font-mono);
-            font-size: 13px;
-        }
-
-        /* Дорожка таймлайна */
-        #timeline-track {
-            flex: 1;
-            position: relative;
-            background-color: #1a1a1a;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        #timeline-ruler {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 20px;
-            background-color: var(--bg-header);
-            border-bottom: 1px solid var(--border-main);
-            overflow: hidden;
-            z-index: 4;
-        }
-
-        .ruler-tick {
-            position: absolute;
-            top: 0;
-            height: 100%;
-            border-left: 1px solid #444444;
-            padding-left: 4px;
-            line-height: 20px;
-            font-size: 9px;
-            color: var(--text-dim);
-            font-family: var(--font-mono);
-            pointer-events: none;
-        }
-
-        #timeline-keys {
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-
-        .keyframe-row {
-            height: 22px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid #222222;
-            position: relative;
-        }
-
-        .keyframe-label {
-            width: 150px;
-            padding: 0 10px;
-            font-size: 10px;
-            background-color: var(--bg-header);
-            border-right: 1px solid var(--border-main);
-            height: 100%;
-            display: flex;
-            align-items: center;
-            position: sticky;
-            left: 0;
-            z-index: 3;
-            font-family: var(--font-mono);
-            color: var(--text-dim);
-            cursor: pointer;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .keyframe-label.selected {
-            color: var(--accent);
-        }
-
-        .keyframe-content {
-            flex: 1;
-            position: relative;
-            height: 100%;
-            min-width: 0;
-        }
-
-        .keyframe-diamond {
-            position: absolute;
-            top: 50%;
-            width: 11px;
-            height: 11px;
-            background-color: var(--keyframe-color);
-            border: 1px solid #000000;
-            transform: translate(-50%, -50%) rotate(45deg);
-            cursor: pointer;
-            z-index: 1;
-            transition: all 0.12s;
-        }
-
-        .keyframe-diamond:hover {
-            background-color: #ffb347;
-            transform: translate(-50%, -50%) rotate(45deg) scale(1.35);
-            z-index: 5;
-        }
-
-        .keyframe-diamond.selected {
-            background-color: #ffffff;
-            box-shadow: 0 0 8px var(--accent);
-        }
-
-        #playhead {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 1px;
-            background-color: var(--accent);
-            pointer-events: none;
-            z-index: 6;
-            box-shadow: 0 0 6px var(--accent);
-        }
-
-        #playhead::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -6px;
-            width: 13px;
-            height: 12px;
-            background-color: var(--accent);
-            clip-path: polygon(0 0, 100% 0, 50% 100%);
-        }
-
-        /* ==========================================================================
-           21. СТАТУС-БАР
-           ========================================================================== */
-        
-        #statusbar {
-            grid-area: statusbar;
-            background-color: var(--bg-header);
-            border-top: 1px solid var(--border-main);
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            gap: 16px;
-            font-size: 11px;
-            color: var(--text-dim);
-        }
-
-        .status-item b {
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        #statusbar .spacer {
-            flex: 1;
-        }
-
-        /* ==========================================================================
-           22. МОДАЛЬНЫЕ ОКНА
-           ========================================================================== */
-        
-        .modal {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(2px);
-        }
-
-        .modal.open {
-            display: flex;
-        }
-
-        .modal-box {
-            background-color: var(--bg-panel);
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            padding: 18px;
-            min-width: 420px;
-            max-width: 640px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-        }
-
-        .modal-box h3 {
-            font-size: 14px;
-            margin-bottom: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--text-main);
-        }
-
-        .modal-box h3 button {
-            color: var(--text-dim);
-            font-size: 20px;
-            padding: 0 4px;
-            line-height: 1;
-        }
-
-        .modal-box h3 button:hover {
-            color: var(--red);
-        }
-
-        .add-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            max-height: 360px;
-            overflow-y: auto;
-        }
-
-        .add-item {
-            padding: 14px 6px;
-            background-color: var(--bg-header);
-            border: 1px solid var(--border-light);
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
-            font-size: 11px;
-            transition: all 0.12s;
-        }
-
-        .add-item:hover {
-            background-color: var(--accent);
-            color: #ffffff;
-            border-color: var(--accent);
-            transform: translateY(-1px);
-        }
-
-        .add-item .icon {
-            font-size: 22px;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        /* ==========================================================================
-           23. УВЕДОМЛЕНИЯ (TOASTS)
-           ========================================================================== */
-        
-        #toast {
-            position: fixed;
-            bottom: 34px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background-color: rgba(20, 20, 20, 0.96);
-            border: 1px solid var(--border-light);
-            border-left: 3px solid var(--green);
-            color: #ffffff;
-            padding: 9px 18px;
-            border-radius: 5px;
-            font-size: 12px;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.25s;
-            z-index: 99999;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-        }
-
-        #toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        #toast.error {
-            border-left-color: var(--red);
-        }
-    </style>
-</head>
-    <body>
-
-<!-- ==========================================================================
-     ГЛАВНЫЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ
-     ========================================================================== -->
 <div id="app">
-
-    <!-- ======================================================================
-         TITLE BAR (Заголовок окна)
-         ====================================================================== -->
-    <div id="titlebar">
-        <span class="logo">⬤</span>
-        <span class="fname" id="filename">Untitled</span>
-        <span class="spacer"></span>
-        <span style="font-size:10px;color:var(--text-dim);">Blender Web Ultimate v1.0</span>
-    </div>
-
-    <!-- ======================================================================
-         MENU BAR (Верхнее меню)
-         ====================================================================== -->
-    <div id="menubar">
-        
-        <!-- ================================================================
-             FILE MENU
-             ================================================================ -->
-        <div class="menu-btn" data-menu="file">
-            File
-            <div class="menu-dropdown">
-                <div class="menu-item" data-act="new">
-                    New
-                    <span class="shortcut">Ctrl+N</span>
-                </div>
-                <div class="menu-item" data-act="open">
-                    Open Scene…
-                    <span class="shortcut">Ctrl+O</span>
-                </div>
-                <div class="menu-item" data-act="import-model">
-                    Import Model…
-                    <span class="shortcut">.glb/.gltf</span>
-                </div>
-                <div class="menu-sep"></div>
-                <div class="menu-item" data-act="save">
-                    Save Scene
-                    <span class="shortcut">Ctrl+S</span>
-                </div>
-                <div class="menu-item" data-act="render">
-                    Render PNG
-                    <span class="shortcut">F12</span>
-                </div>
+    <!-- Верхнее меню -->
+    <div id="top">
+        <div class="logo">⬤ Blender Web</div>
+        <div class="menu-btn" data-menu="file">File
+            <div class="menu-drop">
+                <div class="menu-item" data-act="new">New Scene</div>
+                <div class="menu-item" data-act="import">Import GLTF/GLB</div>
+                <div class="menu-item" data-act="save">Save JSON</div>
+                <div class="menu-item" data-act="open">Open JSON</div>
             </div>
         </div>
-
-        <!-- ================================================================
-             EDIT MENU
-             ================================================================ -->
-        <div class="menu-btn" data-menu="edit">
-            Edit
-            <div class="menu-dropdown">
-                <div class="menu-item" data-act="duplicate">
-                    Duplicate
-                    <span class="shortcut">Shift+D</span>
-                </div>
-                <div class="menu-item" data-act="delete">
-                    Delete
-                    <span class="shortcut">X</span>
-                </div>
-                <div class="menu-sep"></div>
-                <div class="menu-item" data-act="select-all">
-                    Select All
-                    <span class="shortcut">Ctrl+A</span>
-                </div>
-                <div class="menu-item" data-act="deselect">
-                    Deselect
-                    <span class="shortcut">Alt+A</span>
-                </div>
-                <div class="menu-sep"></div>
-                <div class="menu-item" data-act="focus">
-                    Focus Selected
-                    <span class="shortcut">.</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================================================================
-             ADD MENU
-             ================================================================ -->
-        <div class="menu-btn" data-menu="add">
-            Add
-            <div class="menu-dropdown">
+        <div class="menu-btn" data-menu="add">Add
+            <div class="menu-drop">
                 <div class="menu-item" data-act="add:cube">Cube</div>
-                <div class="menu-item" data-act="add:sphere">UV Sphere</div>
+                <div class="menu-item" data-act="add:sphere">Sphere</div>
                 <div class="menu-item" data-act="add:torus">Torus</div>
-                <div class="menu-item" data-act="add:cylinder">Cylinder</div>
                 <div class="menu-item" data-act="add:plane">Plane</div>
-                <div class="menu-sep"></div>
-                <div class="menu-item" data-act="add:light">Point Light</div>
-                <div class="menu-item" data-act="add:camera">Camera</div>
             </div>
         </div>
-
-        <!-- ================================================================
-             ANIMATION MENU
-             ================================================================ -->
-        <div class="menu-btn" data-menu="anim">
-            Animation
-            <div class="menu-dropdown">
-                <div class="menu-item" data-act="key:position">Keyframe Location</div>
-                <div class="menu-item" data-act="key:rotation">Keyframe Rotation</div>
-                <div class="menu-item" data-act="key:scale">Keyframe Scale</div>
-                <div class="menu-item" data-act="key:all">
-                    Keyframe All
-                    <span class="shortcut">I</span>
-                </div>
+        <div class="menu-btn" data-menu="edit">Edit
+            <div class="menu-drop">
+                <div class="menu-item" data-act="dup">Duplicate (Shift+D)</div>
+                <div class="menu-item" data-act="del">Delete (X)</div>
             </div>
         </div>
-
-        <!-- ================================================================
-             PHYSICS MENU
-             ================================================================ -->
-        <div class="menu-btn" data-menu="physics">
-            Physics
-            <div class="menu-dropdown">
-                <div class="menu-item" data-act="phys-toggle">
-                    🎯 Вкл/выкл для выделенных
-                </div>
-                <div class="menu-item" data-act="phys-kick">
-                    ⬆ Подбросить
-                </div>
-                <div class="menu-item" data-act="phys-stop">
-                    ⏹ Стоп движение
-                </div>
-                <div class="menu-sep"></div>
-                <div class="menu-item" data-act="phys-enable-all">
-                    Включить всем
-                </div>
-                <div class="menu-item" data-act="phys-disable-all">
-                    Выключить у всех
-                </div>
-            </div>
-        </div>
-
-        <!-- Растяжка справа -->
-        <div class="spacer"></div>
+        <div style="flex:1"></div>
     </div>
 
-    <!-- ======================================================================
-         VIEWPORT (3D-сцена)
-         ====================================================================== -->
-    <div id="viewport">
-        
-        <!-- ================================================================
-             ИНФОРМАЦИЯ О СЦЕНЕ (ЛЕВО-ВЕРХ)
-             ================================================================ -->
-        <div class="vp-info" id="info-tl">
+    <!-- 3D-Вьюпорт -->
+    <div id="view">
+        <div id="info">
             <div>User Perspective</div>
             <div class="mode" id="modeText">OBJECT MODE</div>
-            <div id="selText" style="color:#aaa;">Nothing selected</div>
+            <div id="selText">Nothing selected</div>
         </div>
-        
-        <!-- ================================================================
-             ПОДСКАЗКИ (ЛЕВО-НИЗ)
-             ================================================================ -->
-        <div class="vp-info" id="info-bl">
-            LMB Select · RMB Rotate · Wheel Zoom · Drag&Drop
-        </div>
-        
-        <!-- ================================================================
-             РАЗМЕР ВЬЮПОРТА (ПРАВО-НИЗ)
-             ================================================================ -->
-        <div class="vp-info" id="info-br">—</div>
-
-        <!-- ================================================================
-             ПАНЕЛЬ ИНСТРУМЕНТОВ (СЛЕВА)
-             ================================================================ -->
         <div id="tools">
-            <button class="tool-btn active" data-tool="select" title="Select (W)">↖</button>
-            <button class="tool-btn" data-tool="move" title="Move (G)">✥</button>
-            <button class="tool-btn" data-tool="rotate" title="Rotate (R)">↻</button>
-            <button class="tool-btn" data-tool="scale" title="Scale (S)">⤢</button>
-            <button class="tool-btn" data-tool="add" title="Add (Shift+A)">＋</button>
-            <button class="tool-btn" data-tool="import" title="Import Model">📁</button>
-            <button class="tool-btn" data-tool="dup" title="Duplicate (Shift+D)">⎘</button>
-            <button class="tool-btn" data-tool="del" title="Delete (X)">✕</button>
-            <button class="tool-btn" data-tool="key" title="Keyframe (I)">◆</button>
-            <button class="tool-btn rec" data-tool="video" id="btnVideoTool" title="Record Video">🎥</button>
+            <button class="tool active" data-tool="select" title="Select (W)">↖</button>
+            <button class="tool" data-tool="move" title="Move (G)">✥</button>
+            <button class="tool" data-tool="rotate" title="Rotate (R)">↻</button>
+            <button class="tool" data-tool="scale" title="Scale (S)">⤢</button>
+            <button class="tool" data-tool="add" title="Add (Shift+A)">＋</button>
+            <button class="tool" data-tool="del" title="Delete (X)">✕</button>
         </div>
-
-        <!-- ================================================================
-             НАВИГАЦИОННЫЙ ГИЗМО (СПРАВА-СНИЗУ)
-             ================================================================ -->
-        <svg id="nav-gizmo" viewBox="0 0 100 100"></svg>
-        
-        <!-- ================================================================
-             РАМКА ВЫДЕЛЕНИЯ
-             ================================================================ -->
-        <div id="sel-box"></div>
-
     </div>
-        <!-- ======================================================================
-         RIGHT PANEL (Outliner + Properties)
-         ====================================================================== -->
-    <div id="right-panel">
-        
-        <!-- ================================================================
-             OUTLINER (Список объектов)
-             ================================================================ -->
-        <div class="panel-header" id="outlinerHeader">
-            Outliner 
-            <span id="objCountBadge" style="color:var(--text-main)">0</span>
-        </div>
+
+    <!-- Правая панель -->
+    <div id="right">
+        <div class="panel-head">Outliner</div>
         <div id="outliner"></div>
-
-        <!-- ================================================================
-             ВКЛАДКИ PROPERTIES
-             ================================================================ -->
-        <div class="tab-bar">
-            <div class="tab-btn active" data-tab="object">⚙</div>
-            <div class="tab-btn" data-tab="transform">↔</div>
-            <div class="tab-btn" data-tab="material">🎨</div>
-            <div class="tab-btn" data-tab="physics" title="Физика">⚛</div>
-            <div class="tab-btn" data-tab="scene">🌄</div>
-            <div class="tab-btn" data-tab="animation">🎬</div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="transform">↔</div>
+            <div class="tab" data-tab="material">🎨</div>
+            <div class="tab" data-tab="physics">⚛</div>
+            <div class="tab" data-tab="scene">🌄</div>
         </div>
-
-        <!-- ================================================================
-             КОНТЕНТ PROPERTIES
-             ================================================================ -->
-        <div id="properties">
-
-            <!-- ============================================================
-                 TAB: Object
-                 ============================================================ -->
-            <div class="tab-content active" data-tab-content="object">
-                
-                <div class="prop-group">
-                    <div class="prop-group-header">Object</div>
-                    <div class="prop-group-body">
-                        
-                        <div class="prop-row" style="grid-template-columns:1fr;">
-                            <div class="fields">
-                                <div class="input-field" style="flex:1;">
-                                    <input type="text" id="pName" placeholder="—">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="prop-row">
-                            <label>Type</label>
-                            <span id="pType" style="color:var(--text-dim);font-size:11px;">—</span>
-                        </div>
-                        
-                        <label class="check-row">
-                            <input type="checkbox" id="pVisible" checked> Visible
-                        </label>
-                        
-                        <label class="check-row">
-                            <input type="checkbox" id="pCastShadow" checked> Cast shadow
-                        </label>
-                        
-                        <label class="check-row">
-                            <input type="checkbox" id="pReceiveShadow" checked> Receive shadow
-                        </label>
-                        
+        
+        <div id="props">
+            <!-- Вкладка Трансформация -->
+            <div class="tab-content active" data-tab-content="transform">
+                <div class="grp">
+                    <div class="grp-title">Transform</div>
+                    <div class="grp-body">
+                        <div class="row"><label>Loc X</label><input type="number" step="0.1" class="inp" id="pX" value="0"></div>
+                        <div class="row"><label>Loc Y</label><input type="number" step="0.1" class="inp" id="pY" value="0"></div>
+                        <div class="row"><label>Loc Z</label><input type="number" step="0.1" class="inp" id="pZ" value="0"></div>
+                        <div class="row"><label>Rot X</label><input type="number" step="1" class="inp" id="rX" value="0"></div>
+                        <div class="row"><label>Rot Y</label><input type="number" step="1" class="inp" id="rY" value="0"></div>
+                        <div class="row"><label>Rot Z</label><input type="number" step="1" class="inp" id="rZ" value="0"></div>
+                        <div class="row"><label>Scale</label><input type="number" step="0.1" class="inp" id="pS" value="1"></div>
                     </div>
                 </div>
-
-                <div class="prop-group">
-                    <div class="prop-group-header">Actions</div>
-                    <div class="prop-group-body">
-                        <div class="btn-row">
-                            <button class="btn-sm" data-act="duplicate">Duplicate</button>
-                            <button class="btn-sm danger" data-act="delete">Delete</button>
-                        </div>
+                <div class="grp" id="polyGroup" style="display:none">
+                    <div class="grp-title">Polygons</div>
+                    <div class="grp-body">
+                        <div class="row"><label>Segments</label><input type="range" id="pSeg" min="3" max="64" value="32"></div>
+                        <div class="row"><label>Faces</label><span id="pPolyCount" style="color:var(--accent)">—</span></div>
                     </div>
                 </div>
             </div>
 
-            <!-- ============================================================
-                 TAB: Transform (Полигоны)
-                 ============================================================ -->
-            <div class="tab-content" data-tab-content="transform">
-                
-                <div class="prop-group">
-                    <div class="prop-group-header">Transform</div>
-                    <div class="prop-group-body">
-                        
-                        <div class="prop-row">
-                            <label>Location</label>
-                            <div class="fields">
-                                <div class="input-field">
-                                    <span class="axis-tag x">X</span>
-                                    <input type="number" step="0.1" id="pLocX" value="0">
-                                </div>
-                                <div class="input-field">
-                                    <span class="axis-tag y">Y</span>
-                                    <input type="number" step="0.1" id="pLocY" value="0">
-                                </div>
-                                <div class="input-field">
-                                    <span class="axis-tag z">Z</span>
-                                    <input type="number" step="0.1" id="pLocZ" value="0">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="prop-row">
-                            <label>Rotation</label>
-                            <div class="fields">
-                                <div class="input-field">
-                                    <span class="axis-tag x">X</span>
-                                    <input type="number" step="1" id="pRotX" value="0">
-                                </div>
-                                <div class="input-field">
-                                    <span class="axis-tag y">Y</span>
-                                    <input type="number" step="1" id="pRotY" value="0">
-                                </div>
-                                <div class="input-field">
-                                    <span class="axis-tag z">Z</span>
-                                    <input type="number" step="1" id="pRotZ" value="0">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="prop-row">
-                            <label>Scale</label>
-                            <div class="fields">
-                                <div class="input-field">
-                                    <span class="axis-tag x">X</span>
-                                    <input type="number" step="0.1" id="pSclX" value="1">
-                                </div>
-                                <div class="input-field">
-                                    <span class="axis-tag y">Y</span>
-                                    <input type="number" step="0.1" id="pSclY" value="1">
-                                </div>
-                                <div class="input-field">
-                                    <span class="axis-tag z">Z</span>
-                                    <input type="number" step="0.1" id="pSclZ" value="1">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ПОЛИГОНЫ -->
-                <div class="prop-group" id="polyGroup" style="display:none;">
-                    <div class="prop-group-header">🔷 Детализация (Полигоны)</div>
-                    <div class="prop-group-body">
-                        <div class="prop-row">
-                            <label>Segments</label>
-                            <div class="fields">
-                                <input type="range" id="pSegments" min="3" max="64" step="1" value="32">
-                                <span class="value-label" id="pSegmentsV">32</span>
-                            </div>
-                        </div>
-                        <div class="prop-row">
-                            <label>Полигонов</label>
-                            <span id="pPolyCount" style="color:var(--accent);font-family:monospace;">—</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ============================================================
-                 TAB: Material
-                 ============================================================ -->
+            <!-- Вкладка Материал -->
             <div class="tab-content" data-tab-content="material">
-                
-                <div class="prop-group">
-                    <div class="prop-group-header">Material</div>
-                    <div class="prop-group-body">
-                        
-                        <div class="prop-row">
-                            <label>Color</label>
-                            <div class="fields">
-                                <div class="input-field" style="flex:1;">
-                                    <input type="color" id="pColor" value="#cccccc">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="prop-row">
-                            <label>Metallic</label>
-                            <div class="fields">
-                                <input type="range" id="pMetal" min="0" max="1" step="0.01" value="0.1">
-                                <span class="value-label" id="pMetalV">0.10</span>
-                            </div>
-                        </div>
-                        
-                        <div class="prop-row">
-                            <label>Roughness</label>
-                            <div class="fields">
-                                <input type="range" id="pRough" min="0" max="1" step="0.01" value="0.55">
-                                <span class="value-label" id="pRoughV">0.55</span>
-                            </div>
-                        </div>
-
-                        <div class="prop-row">
-                            <label>Texture</label>
-                            <div class="fields">
-                                <input type="file" id="texFile" accept="image/*" style="font-size:10px;">
-                            </div>
-                        </div>
+                <div class="grp">
+                    <div class="grp-title">Material</div>
+                    <div class="grp-body">
+                        <div class="row"><label>Color</label><input type="color" id="pColor" value="#cccccc"></div>
+                        <div class="row"><label>Metalness</label><input type="range" id="pMetal" min="0" max="1" step="0.01" value="0.1"></div>
+                        <div class="row"><label>Roughness</label><input type="range" id="pRough" min="0" max="1" step="0.01" value="0.5"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- ============================================================
-                 TAB: Physics
-                 ============================================================ -->
+            <!-- Вкладка Физика -->
             <div class="tab-content" data-tab-content="physics">
-                
-                <div class="prop-group">
-                    <div class="prop-group-header">⚛ Мир (Глобально)</div>
-                    <div class="prop-group-body">
-                        
-                        <label class="check-row">
-                            <input type="checkbox" id="physEnabled"> Включить физику
-                        </label>
-                        
-                        <div class="prop-row">
-                            <label>Gravity</label>
-                            <div class="fields">
-                                <input type="range" id="physGravity" min="-30" max="10" step="0.1" value="-9.82">
-                                <span class="value-label" id="physGravityV">-9.8</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="prop-group">
-                    <div class="prop-group-header">🎯 Объект</div>
-                    <div class="prop-group-body">
-                        
-                        <div style="color:var(--text-dim);margin-bottom:6px;" id="physObjInfo">
-                            Ничего не выделено
-                        </div>
-                        
-                        <label class="check-row">
-                            <input type="checkbox" id="objPhysEnabled"> Участвует
-                        </label>
-                        
-                        <div class="prop-row">
-                            <label>Mass</label>
-                            <div class="fields">
-                                <input type="range" id="objPhysMass" min="0.1" max="20" step="0.1" value="1">
-                                <span class="value-label" id="objPhysMassV">1.0</span>
-                            </div>
-                        </div>
-
-                        <div class="btn-row">
-                            <button class="btn-sm primary" id="objPhysKick">⬆ Kick</button>
-                            <button class="btn-sm danger" id="objPhysRemove">✕ Remove</button>
-                        </div>
+                <div class="grp">
+                    <div class="grp-title">Physics</div>
+                    <div class="grp-body">
+                        <label style="display:flex;gap:8px;margin-bottom:10px;cursor:pointer"><input type="checkbox" id="physEnabled"> Enable Physics</label>
+                        <button class="btn primary" id="btnKick">⬆ Kick Selected</button>
                     </div>
                 </div>
             </div>
 
-            <!-- ============================================================
-                 TAB: Scene (Фон)
-                 ============================================================ -->
+            <!-- Вкладка Сцена (Фон) -->
             <div class="tab-content" data-tab-content="scene">
-                
-                <div class="prop-group">
-                    <div class="prop-group-header">🌄 Background</div>
-                    <div class="prop-group-body">
-                        
-                        <div class="prop-row">
-                            <label>Color</label>
-                            <div class="fields">
-                                <input type="color" id="bgColorPicker" value="#3a3a3a" style="flex:1;height:22px;border:none;background:transparent;">
-                            </div>
-                        </div>
-                        
-                        <div class="prop-row">
-                            <label>Image</label>
-                            <div class="fields">
-                                <input type="file" id="bgFile" accept="image/*" style="font-size:10px;">
-                            </div>
-                        </div>
-
-                        <div class="prop-row">
-                            <label>Blur</label>
-                            <div class="fields">
-                                <input type="range" id="bgBlur" min="0" max="20" step="0.5" value="0">
-                                <span class="value-label" id="bgBlurV">0</span>
-                            </div>
-                        </div>
-
-                        <div class="btn-row">
-                            <button class="btn-sm danger" id="btnClearBG" style="width:100%;">✕ Сбросить фон</button>
-                        </div>
+                <div class="grp">
+                    <div class="grp-title">Background</div>
+                    <div class="grp-body">
+                        <div class="row"><label>Color</label><input type="color" id="bgColor" value="#3a3a3a"></div>
+                        <div class="row"><label>Image</label><input type="file" id="bgFile" accept="image/*" style="width:100px;font-size:10px"></div>
+                        <button class="btn" id="btnClearBG">Clear BG</button>
                     </div>
                 </div>
             </div>
-
-            <!-- ============================================================
-                 TAB: Animation
-                 ============================================================ -->
-            <div class="tab-content" data-tab-content="animation">
-                <div class="prop-group">
-                    <div class="prop-group-header">🎬 Keyframe</div>
-                    <div class="prop-group-body">
-                        <div class="btn-row">
-                            <button class="btn-sm" data-act="key:position">Location</button>
-                            <button class="btn-sm" data-act="key:rotation">Rotation</button>
-                            <button class="btn-sm" data-act="key:scale">Scale</button>
-                        </div>
-                        <div class="btn-row">
-                            <button class="btn-sm primary" data-act="key:all">All (I)</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
 
-    <!-- ======================================================================
-         TIMELINE (Таймлайн)
-         ====================================================================== -->
-    <div id="timeline">
-        <div id="timeline-controls">
-            <button class="tl-btn" id="btnPlay">▶</button>
-            <button class="tl-btn rec" id="btnRec">⏺ REC</button>
-            
-            <div class="tl-field" style="margin-left:10px;">
-                <label>Frame</label>
-                <input type="number" id="fFrame" value="1">
-            </div>
-            <div class="tl-field">
-                <label>FPS</label>
-                <input type="number" id="fFps" value="24">
-            </div>
-            
-            <div class="spacer" style="flex:1;"></div>
-            
-            <div class="tl-field">
-                Current: <span id="curFrame">1</span>
-            </div>
+    <!-- Таймлайн -->
+    <div id="anim">
+        <div id="anim-top">
+            <button class="tool" id="btnPlay">▶</button>
+            <span>Frame: <span id="curFrame" style="color:var(--accent)">1</span></span>
         </div>
-        
-        <div id="timeline-track">
-            <div id="timeline-ruler"></div>
-            <div id="timeline-keys"></div>
-            <div id="playhead" style="left:0px;"></div>
+        <div id="timeline">
+            <div id="ruler"></div>
+            <div id="playhead"></div>
         </div>
     </div>
 
-    <!-- ======================================================================
-         STATUS BAR (Статус-бар)
-         ====================================================================== -->
-    <div id="statusbar">
-        <div class="status-item">Selected: <b id="stSel">0</b></div>
-        <div class="status-item">Objects: <b id="stObj">0</b></div>
-        <div class="status-item">Frame: <b id="stFrame">1</b></div>
-        <div class="status-item">FPS: <b id="stFps">60</b></div>
-        
-        <div class="spacer"></div>
-        
-        <div>
-            <kbd>W</kbd> Select · <kbd>G</kbd> Move · <kbd>I</kbd> Keyframe · <kbd>Space</kbd> Play
-        </div>
+    <!-- Статус бар -->
+    <div id="status">
+        <div>Selected: <b id="stSel">0</b></div>
+        <div>Objects: <b id="stObj">0</b></div>
+        <div>FPS: <b id="stFps">60</b></div>
     </div>
+</div>
 
-</div> <!-- /app -->
-
-<!-- ==========================================================================
-     MODALS (Модальные окна)
-     ========================================================================== -->
+<!-- Модальное окно добавления -->
 <div class="modal" id="addModal">
     <div class="modal-box">
-        <h3>
-            <span>Add Object</span> 
-            <button onclick="document.getElementById('addModal').classList.remove('open')">×</button>
-        </h3>
+        <h3 style="margin-bottom:10px">Add Object</h3>
         <div class="add-grid">
-            <div class="add-item" data-add="cube"><span class="icon">▢</span>Cube</div>
-            <div class="add-item" data-add="sphere"><span class="icon">●</span>Sphere</div>
-            <div class="add-item" data-add="torus"><span class="icon">◎</span>Torus</div>
-            <div class="add-item" data-add="cylinder"><span class="icon">⬭</span>Cylinder</div>
-            <div class="add-item" data-add="plane"><span class="icon">▭</span>Plane</div>
-            <div class="add-item" data-add="light"><span class="icon">💡</span>Light</div>
+            <div class="add-item" data-add="cube">▢<br>Cube</div>
+            <div class="add-item" data-add="sphere">●<br>Sphere</div>
+            <div class="add-item" data-add="torus">◎<br>Torus</div>
+            <div class="add-item" data-add="plane">▭<br>Plane</div>
         </div>
     </div>
 </div>
+<style>
+    /* ==========================================================================
+       1. БАЗОВЫЕ НАСТРОЙКИ И СБРОС
+       ========================================================================== */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-<div id="loading">
-    <div class="spinner"></div>
-    <div class="msg" id="loadingMsg">Загрузка…</div>
-</div>
-<div id="toast"></div>
-        <script type="importmap">
+    :root {
+        --bg: #1a1a1a;
+        --panel: #222222;
+        --header: #333333;
+        --border: #111111;
+        --accent: #e87d0d;
+        --text: #cccccc;
+        --dim: #888888;
+    }
+
+    html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        user-select: none;
+    }
+
+    button, input, select {
+        font-family: inherit;
+        font-size: inherit;
+        color: inherit;
+    }
+
+    button {
+        cursor: pointer;
+        border: none;
+        background: none;
+        outline: none;
+    }
+
+    /* ==========================================================================
+       2. СЕТКА ПРИЛОЖЕНИЯ
+       ========================================================================== */
+    #app {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        grid-template-rows: 30px 1fr 180px 24px;
+        grid-template-areas: 
+            "top top" 
+            "view right" 
+            "anim right" 
+            "status status";
+        width: 100vw;
+        height: 100vh;
+    }
+
+    /* ==========================================================================
+       3. ВЕРХНЕЕ МЕНЮ
+       ========================================================================== */
+    #top {
+        grid-area: top;
+        background-color: var(--panel);
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        border-bottom: 1px solid var(--border);
+        z-index: 100;
+    }
+
+    .logo {
+        color: var(--accent);
+        font-weight: bold;
+        margin-right: 15px;
+        font-size: 14px;
+    }
+
+    .menu-btn {
+        padding: 0 10px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        position: relative;
+        border-radius: 3px;
+    }
+
+    .menu-btn:hover {
+        background-color: var(--header);
+    }
+
+    .menu-btn.open {
+        background-color: var(--accent);
+        color: #ffffff;
+    }
+
+    .menu-drop {
+        position: absolute;
+        top: 30px;
+        left: 0;
+        background-color: var(--header);
+        border: 1px solid var(--border);
+        display: none;
+        min-width: 160px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .menu-btn.open .menu-drop {
+        display: block;
+    }
+
+    .menu-item {
+        padding: 8px 15px;
+        display: flex;
+        justify-content: space-between;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .menu-item:hover {
+        background-color: var(--accent);
+        color: #ffffff;
+    }
+
+    /* ==========================================================================
+       4. 3D-ВЬЮПОРТ
+       ========================================================================== */
+    #view {
+        grid-area: view;
+        position: relative;
+        background-color: #3a3a3a;
+        overflow: hidden;
+    }
+
+    #view canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    #info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        pointer-events: none;
+        line-height: 1.6;
+        color: #dddddd;
+        text-shadow: 1px 1px 2px #000000;
+    }
+
+    #info .mode {
+        color: var(--accent);
+        font-weight: bold;
+    }
+
+    /* ==========================================================================
+       5. ПАНЕЛЬ ИНСТРУМЕНТОВ (СЛЕВА)
+       ========================================================================== */
+    #tools {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        z-index: 10;
+    }
+
+    .tool {
+        width: 34px;
+        height: 34px;
+        background-color: rgba(30, 30, 30, 0.85);
+        border: 1px solid #444444;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        transition: all 0.1s;
+    }
+
+    .tool:hover {
+        background-color: var(--header);
+    }
+
+    .tool.active {
+        background-color: var(--accent);
+        color: #ffffff;
+        border-color: var(--accent);
+    }
+
+    /* ==========================================================================
+       6. ПРАВАЯ ПАНЕЛЬ (СВОЙСТВА)
+       ========================================================================== */
+    #right {
+        grid-area: right;
+        background-color: var(--panel);
+        display: flex;
+        flex-direction: column;
+        border-left: 1px solid var(--border);
+    }
+
+    .panel-head {
+        background-color: var(--header);
+        padding: 6px 10px;
+        font-size: 10px;
+        font-weight: bold;
+        color: var(--accent);
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border);
+    }
+
+    #outliner {
+        height: 130px;
+        overflow-y: auto;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .out-row {
+        padding: 6px 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border-left: 2px solid transparent;
+    }
+
+    .out-row:hover {
+        background-color: var(--header);
+    }
+
+    .out-row.selected {
+        background-color: var(--accent);
+        color: #ffffff;
+        border-left-color: #ffffff;
+    }
+
+    /* ==========================================================================
+       7. ВКЛАДКИ
+       ========================================================================== */
+    .tabs {
+        display: flex;
+        background-color: var(--header);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+        flex: 1;
+        padding: 8px;
+        text-align: center;
+        cursor: pointer;
+        color: var(--dim);
+        border-bottom: 2px solid transparent;
+        transition: all 0.1s;
+    }
+
+    .tab:hover {
+        color: #ffffff;
+    }
+
+    .tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+    }
+
+    #props {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    /* ==========================================================================
+       8. ГРУППЫ СВОЙСТВ И ИНПУТЫ
+       ========================================================================== */
+    .grp {
+        background-color: var(--header);
+        border: 1px solid #444444;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        overflow: hidden;
+    }
+
+    .grp-title {
+        padding: 6px 10px;
+        font-size: 10px;
+        font-weight: bold;
+        color: var(--accent);
+        background-color: #3a3a3a;
+    }
+
+    .grp-body {
+        padding: 10px;
+    }
+
+    .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        min-height: 22px;
+    }
+
+    .row label {
+        font-size: 11px;
+        color: var(--dim);
+    }
+
+    .inp {
+        background-color: var(--bg);
+        border: 1px solid #444444;
+        color: #ffffff;
+        padding: 4px 6px;
+        border-radius: 3px;
+        width: 80px;
+        outline: none;
+    }
+
+    .inp:focus {
+        border-color: var(--accent);
+    }
+
+    .btn {
+        background-color: var(--bg);
+        border: 1px solid #444444;
+        padding: 6px 10px;
+        border-radius: 4px;
+        color: #ffffff;
+        margin-top: 5px;
+        width: 100%;
+        transition: background 0.1s;
+    }
+
+    .btn:hover {
+        background-color: var(--header);
+    }
+
+    .btn.primary {
+        background-color: var(--accent);
+        border-color: var(--accent);
+    }
+
+    input[type="range"] {
+        width: 100px;
+        accent-color: var(--accent);
+    }
+
+    input[type="color"] {
+        width: 100%;
+        height: 25px;
+        border: none;
+        background: none;
+        cursor: pointer;
+    }
+
+    /* ==========================================================================
+       9. ТАЙМЛАЙН
+       ========================================================================== */
+    #anim {
+        grid-area: anim;
+        background-color: var(--panel);
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+    }
+
+    #anim-top {
+        display: flex;
+        padding: 5px 10px;
+        gap: 15px;
+        background-color: var(--header);
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+    }
+
+    #timeline {
+        flex: 1;
+        position: relative;
+        background-color: #151515;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    #ruler {
+        height: 20px;
+        background-color: var(--header);
+        border-bottom: 1px solid var(--border);
+    }
+
+    #playhead {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: var(--accent);
+        left: 0;
+        pointer-events: none;
+    }
+
+    /* ==========================================================================
+       10. СТАТУС-БАР И МОДАЛКИ
+       ========================================================================== */
+    #status {
+        grid-area: status;
+        background-color: var(--header);
+        display: flex;
+        align-items: center;
+        padding: 0 15px;
+        gap: 20px;
+        color: var(--dim);
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+    }
+
+    #status b {
+        color: var(--accent);
+    }
+
+    .modal {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .modal.open {
+        display: flex;
+    }
+
+    .modal-box {
+        background-color: var(--panel);
+        border: 1px solid #444444;
+        padding: 20px;
+        border-radius: 8px;
+        min-width: 350px;
+    }
+
+    .add-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .add-item {
+        background-color: var(--header);
+        border: 1px solid #444444;
+        padding: 15px;
+        text-align: center;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .add-item:hover {
+        background-color: var(--accent);
+        color: #ffffff;
+    }
+</style>
+<script type="importmap">
 {
     "imports": {
         "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
@@ -1734,66 +641,42 @@
 </script>
 
 <script type="module">
-/* ==========================================================================
-   ИМПОРТ БИБЛИОТЕК
-   ========================================================================== */
 import * as THREE from 'three';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as CANNON from 'cannon-es';
 
-/* ==========================================================================
-   УТИЛИТЫ (УВЕДОМЛЕНИЯ)
-   ========================================================================== */
-function toast(msg, type = '') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = type;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 2500);
-}
-
-let isDirty = false;
-function markDirty() {
-    isDirty = true;
-    document.getElementById('filename').classList.add('dirty');
-}
-
-/* ==========================================================================
-   ИНИЦИАЛИЗАЦИЯ THREE.JS
-   ========================================================================== */
-const viewportEl = document.getElementById('viewport');
+// ==========================================
+// 1. СЦЕНА И РЕНДЕРЕР
+// ==========================================
+const viewEl = document.getElementById('view');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x3a3a3a);
 
-const camera = new THREE.PerspectiveCamera(50, viewportEl.clientWidth / viewportEl.clientHeight, 0.1, 2000);
+const camera = new THREE.PerspectiveCamera(50, viewEl.clientWidth / viewEl.clientHeight, 0.1, 2000);
 camera.position.set(7, 5, 7);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(viewportEl.clientWidth, viewportEl.clientHeight);
+renderer.setSize(viewEl.clientWidth, viewEl.clientHeight);
 renderer.shadowMap.enabled = true;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-viewportEl.appendChild(renderer.domElement);
+viewEl.appendChild(renderer.domElement);
 
-/* ==========================================================================
-   СВЕТ И СЕТКА
-   ========================================================================== */
-scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+// ==========================================
+// 2. СВЕТ И СЕТКА
+// ==========================================
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
 dirLight.position.set(5, 10, 5);
 dirLight.castShadow = true;
-dirLight.shadow.mapSize.width = 1024;
-dirLight.shadow.mapSize.height = 1024;
 scene.add(dirLight);
 
 const grid = new THREE.GridHelper(50, 50, 0x555555, 0x333333);
 scene.add(grid);
 
-/* ==========================================================================
-   ОРБИТАЛЬНАЯ КАМЕРА
-   ========================================================================== */
+// ==========================================
+// 3. ОРБИТА КАМЕРЫ (ВРАЩЕНИЕ И ЗУМ)
+// ==========================================
 const orbit = {
     target: new THREE.Vector3(0, 0, 0),
     radius: camera.position.length(),
@@ -1813,15 +696,18 @@ const orbit = {
 let camState = 'none';
 let lastX = 0, lastY = 0;
 
-viewportEl.addEventListener('contextmenu', e => e.preventDefault());
-viewportEl.addEventListener('mousedown', e => {
-    if (e.target.closest('#tools') || e.target.closest('#nav-gizmo')) return;
-    if (e.button === 2) camState = 'rotate';
-    else if (e.button === 1) { camState = 'pan'; e.preventDefault(); }
-    else return;
+// Отключаем контекстное меню ПКМ
+viewEl.addEventListener('contextmenu', e => e.preventDefault());
+
+// Зажатие мыши
+viewEl.addEventListener('mousedown', e => {
+    if (e.target.closest('#tools')) return;
+    if (e.button === 2) camState = 'rotate'; // ПКМ
+    else if (e.button === 1) { camState = 'pan'; e.preventDefault(); } // СКМ
     lastX = e.clientX; lastY = e.clientY;
 });
 
+// Движение мыши
 window.addEventListener('mousemove', e => {
     if (camState === 'none') return;
     const dx = e.clientX - lastX;
@@ -1829,325 +715,225 @@ window.addEventListener('mousemove', e => {
     lastX = e.clientX; lastY = e.clientY;
 
     if (camState === 'rotate') {
-        orbit.theta -= dx * 0.008;
-        orbit.phi -= dy * 0.008;
+        orbit.theta -= dx * 0.01;
+        orbit.phi -= dy * 0.01;
+        orbit.phi = Math.max(0.1, Math.min(Math.PI - 0.1, orbit.phi));
         orbit.update();
-        redrawGizmo();
     } else if (camState === 'pan') {
         const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
         const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
-        const dist = camera.position.distanceTo(orbit.target) * 0.0015;
-        orbit.target.addScaledVector(right, -dx * dist).addScaledVector(up, dy * dist);
+        orbit.target.addScaledVector(right, -dx * 0.01 * orbit.radius).addScaledVector(up, dy * 0.01 * orbit.radius);
         orbit.update();
     }
 });
+
 window.addEventListener('mouseup', () => camState = 'none');
 
-viewportEl.addEventListener('wheel', e => {
+// Зум колесиком
+viewEl.addEventListener('wheel', e => {
     e.preventDefault();
     orbit.radius *= (e.deltaY > 0 ? 1.1 : 0.9);
     orbit.radius = Math.max(1, Math.min(100, orbit.radius));
     orbit.update();
 });
 
-/* ==========================================================================
-   ГИЗМО
-   ========================================================================== */
-function redrawGizmo() {
-    const svg = document.getElementById('nav-gizmo');
-    svg.innerHTML = `
-        <circle cx="50" cy="50" r="45" fill="rgba(0,0,0,0.3)"/>
-        <line x1="50" y1="50" x2="80" y2="50" stroke="var(--axis-x)" stroke-width="2"/>
-        <text x="85" y="54" fill="var(--axis-x)" font-size="12">X</text>
-        <line x1="50" y1="50" x2="50" y2="20" stroke="var(--axis-y)" stroke-width="2"/>
-        <text x="46" y="15" fill="var(--axis-y)" font-size="12">Y</text>
-        <line x1="50" y1="50" x2="30" y2="70" stroke="var(--axis-z)" stroke-width="2"/>
-        <text x="22" y="80" fill="var(--axis-z)" font-size="12">Z</text>
-    `;
-}
-
-/* ==========================================================================
-   ОБЪЕКТЫ
-   ========================================================================== */
+// ==========================================
+// 4. ОБЪЕКТЫ И ГЕОМЕТРИЯ
+// ==========================================
 const objects = [];
-let selectedObject = null;
-const counters = {};
-const typeNames = {
-    cube: 'Cube', sphere: 'Sphere', torus: 'Torus', cylinder: 'Cylinder', 
-    plane: 'Plane', imported: 'Imported'
-};
+let selected = null;
+let currentTool = 'select'; // Переменная для инструментов
+const counters = {}; // Счетчики имен (Cube.1, Cube.2)
 
-let currentTool = 'select';
-
-function makeGeometry(type, segments = 32) {
-    const seg = Math.max(3, Math.min(64, Math.round(segments)));
-    const halfSeg = Math.max(2, Math.round(seg / 2));
-    switch (type) {
-        case 'cube': return new THREE.BoxGeometry(2, 2, 2);
-        case 'sphere': return new THREE.SphereGeometry(1, seg, halfSeg);
-        case 'torus': return new THREE.TorusGeometry(1, 0.4, halfSeg, seg);
-        case 'cylinder': return new THREE.CylinderGeometry(1, 1, 2, seg);
-        case 'plane': return new THREE.PlaneGeometry(2, 2);
-        default: return new THREE.BoxGeometry(2, 2, 2);
-    }
+// Функция создания геометрии с полигонами
+function createGeom(type, seg = 32) {
+    const s = Math.max(3, Math.min(64, seg));
+    if (type === 'cube') return new THREE.BoxGeometry(2, 2, 2);
+    if (type === 'sphere') return new THREE.SphereGeometry(1, s, s / 2);
+    if (type === 'torus') return new THREE.TorusGeometry(1, 0.4, s / 2, s);
+    if (type === 'plane') return new THREE.PlaneGeometry(2, 2);
+    return new THREE.BoxGeometry(2, 2, 2);
 }
 
-function addObject(type, opts = {}) {
+// Функция добавления объекта в сцену
+function addObj(type) {
     const mat = new THREE.MeshStandardMaterial({ 
-        color: opts.color ?? 0xcccccc, 
+        color: 0xcccccc, 
         metalness: 0.1, 
-        roughness: 0.55 
+        roughness: 0.5 
     });
-    const obj = new THREE.Mesh(makeGeometry(type, opts.segments ?? 32), mat);
-    obj.castShadow = true;
-    obj.receiveShadow = true;
-    obj.position.y = type === 'plane' ? 0 : 1;
     
-    if (type === 'plane') obj.rotation.x = -Math.PI / 2;
-
+    const mesh = new THREE.Mesh(createGeom(type, 32), mat);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.position.y = type === 'plane' ? 0 : 1;
+    
+    if (type === 'plane') mesh.rotation.x = -Math.PI / 2;
+    
+    // Задаем уникальное имя
     counters[type] = (counters[type] || 0) + 1;
-    obj.userData = {
-        type: type,
-        name: `${typeNames[type]}.${String(counters[type]).padStart(3, '0')}`,
-        segments: opts.segments ?? 32
+    mesh.userData = { 
+        type: type, 
+        name: type + '.' + counters[type], 
+        segments: 32 
     };
-
-    scene.add(obj);
-    objects.push(obj);
-    selectObject(obj);
-    refreshOutliner();
-    markDirty();
-    return obj;
+    
+    scene.add(mesh);
+    objects.push(mesh);
+    selectObj(mesh);
+    updateOutliner();
 }
 
-function selectObject(obj) {
-    selectedObject = obj;
-    document.querySelectorAll('.outliner-row').forEach(el => el.classList.remove('selected'));
+// Функция выделения объекта
+function selectObj(mesh) {
+    selected = mesh;
+    document.querySelectorAll('.out-row').forEach(el => el.classList.remove('selected'));
     
-    if (obj) {
-        document.getElementById('selText').textContent = obj.userData.name;
-        document.getElementById('pName').value = obj.userData.name;
-        document.getElementById('pType').textContent = typeNames[obj.userData.type] || obj.userData.type;
+    if (mesh) {
+        document.getElementById('selText').innerText = mesh.userData.name;
+        document.getElementById('pX').value = mesh.position.x.toFixed(2);
+        document.getElementById('pY').value = mesh.position.y.toFixed(2);
+        document.getElementById('pZ').value = mesh.position.z.toFixed(2);
+        document.getElementById('rX').value = (mesh.rotation.x * 180 / Math.PI).toFixed(1);
+        document.getElementById('rY').value = (mesh.rotation.y * 180 / Math.PI).toFixed(1);
+        document.getElementById('rZ').value = (mesh.rotation.z * 180 / Math.PI).toFixed(1);
+        document.getElementById('pS').value = mesh.scale.x.toFixed(2);
+        document.getElementById('pColor').value = '#' + mesh.material.color.getHexString();
+        document.getElementById('pMetal').value = mesh.material.metalness;
+        document.getElementById('pRough').value = mesh.material.roughness;
+        document.getElementById('stSel').innerText = 1;
         
-        document.getElementById('pLocX').value = obj.position.x.toFixed(2);
-        document.getElementById('pLocY').value = obj.position.y.toFixed(2);
-        document.getElementById('pLocZ').value = obj.position.z.toFixed(2);
-        document.getElementById('pRotX').value = (obj.rotation.x * 180 / Math.PI).toFixed(1);
-        document.getElementById('pRotY').value = (obj.rotation.y * 180 / Math.PI).toFixed(1);
-        document.getElementById('pRotZ').value = (obj.rotation.z * 180 / Math.PI).toFixed(1);
-        document.getElementById('pSclX').value = obj.scale.x.toFixed(2);
-        document.getElementById('pSclY').value = obj.scale.y.toFixed(2);
-        document.getElementById('pSclZ').value = obj.scale.z.toFixed(2);
+        // Полигоны
+        document.getElementById('polyGroup').style.display = mesh.userData.type !== 'imported' ? 'block' : 'none';
+        document.getElementById('pSeg').value = mesh.userData.segments || 32;
         
-        if (obj.material) {
-            document.getElementById('pColor').value = '#' + obj.material.color.getHexString();
-            document.getElementById('pMetal').value = obj.material.metalness;
-            document.getElementById('pRough').value = obj.material.roughness;
-            document.getElementById('pMetalV').textContent = obj.material.metalness.toFixed(2);
-            document.getElementById('pRoughV').textContent = obj.material.roughness.toFixed(2);
-        }
+        let tris = 0;
+        if (mesh.geometry.index) tris = mesh.geometry.index.count / 3;
+        else if (mesh.geometry.attributes.position) tris = mesh.geometry.attributes.position.count / 3;
+        document.getElementById('pPolyCount').innerText = Math.round(tris);
 
-        if (obj.userData.type !== 'imported') {
-            document.getElementById('polyGroup').style.display = 'block';
-            document.getElementById('pSegments').value = obj.userData.segments || 32;
-            document.getElementById('pSegmentsV').textContent = obj.userData.segments || 32;
-            // Считаем полигоны
-            let tris = 0;
-            if (obj.geometry.index) tris = obj.geometry.index.count / 3;
-            else if (obj.geometry.attributes.position) tris = obj.geometry.attributes.position.count / 3;
-            document.getElementById('pPolyCount').textContent = Math.round(tris);
-        } else {
-            document.getElementById('polyGroup').style.display = 'none';
-        }
-
-        if (['move', 'rotate', 'scale'].includes(currentTool)) {
-            transform.attach(obj);
-        } else {
-            transform.detach();
-        }
-        
-        document.getElementById('stSel').textContent = 1;
+        // Габариты
+        if (currentTool !== 'select') transform.attach(mesh);
+        else transform.detach();
     } else {
-        document.getElementById('selText').textContent = 'Nothing selected';
-        document.getElementById('pName').value = '';
-        document.getElementById('pType').textContent = '—';
+        document.getElementById('selText').innerText = 'Nothing selected';
+        document.getElementById('stSel').innerText = 0;
         document.getElementById('polyGroup').style.display = 'none';
-        document.getElementById('stSel').textContent = 0;
         transform.detach();
     }
+    updateOutliner();
 }
 
-function refreshOutliner() {
+// Обновление списка объектов (Outliner)
+function updateOutliner() {
     const out = document.getElementById('outliner');
     out.innerHTML = '';
-    document.getElementById('objCountBadge').textContent = objects.length;
-    document.getElementById('stObj').textContent = objects.length;
+    document.getElementById('stObj').innerText = objects.length;
     
     objects.forEach(o => {
         const div = document.createElement('div');
-        div.className = 'outliner-row' + (o === selectedObject ? ' selected' : '');
-        div.textContent = o.userData.name;
-        div.onclick = () => selectObject(o);
+        div.className = 'out-row' + (o === selected ? ' selected' : '');
+        
+        let icon = '▭';
+        if (o.userData.type === 'cube') icon = '▢';
+        if (o.userData.type === 'sphere') icon = '●';
+        if (o.userData.type === 'torus') icon = '◎';
+        
+        div.innerHTML = `<span>${icon}</span> <span>${o.userData.name}</span>`;
+        div.onclick = () => selectObj(o);
         out.appendChild(div);
     });
 }
 
-/* ==========================================================================
-   TRANSFORM CONTROLS (ГАБАРИТЫ)
-   ========================================================================== */
+// ==========================================
+// 5. TRANSFORM CONTROLS (ГАБАРИТЫ)
+// ==========================================
 const transform = new TransformControls(camera, renderer.domElement);
 transform.addEventListener('dragging-changed', e => {
-    if (e.value && selectedObject) {
-        document.getElementById('pLocX').value = selectedObject.position.x.toFixed(2);
-        document.getElementById('pLocY').value = selectedObject.position.y.toFixed(2);
-        document.getElementById('pLocZ').value = selectedObject.position.z.toFixed(2);
+    if (e.value && selected) {
+        document.getElementById('pX').value = selected.position.x.toFixed(2);
+        document.getElementById('pY').value = selected.position.y.toFixed(2);
+        document.getElementById('pZ').value = selected.position.z.toFixed(2);
     }
 });
 scene.add(transform);
-
-document.querySelectorAll('.tool-btn').forEach(btn => {
+    // ==========================================
+// 6. ЛОГИКА ИНСТРУМЕНТОВ (СЛЕВА)
+// ==========================================
+document.querySelectorAll('.tool').forEach(btn => {
     btn.onclick = () => {
-        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        // Визуальное выделение
+        document.querySelectorAll('.tool').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        
         currentTool = btn.dataset.tool;
         
         if (currentTool === 'add') {
             document.getElementById('addModal').classList.add('open');
             return;
         }
-
+        
         if (currentTool === 'del') {
-            if (selectedObject) {
-                scene.remove(selectedObject);
-                objects.splice(objects.indexOf(selectedObject), 1);
-                selectObject(null);
-                refreshOutliner();
+            if (selected) {
+                scene.remove(selected);
+                objects.splice(objects.indexOf(selected), 1);
+                selectObj(null);
+                updateOutliner();
             }
             return;
         }
-
-        if (selectedObject) {
+        
+        if (selected) {
             if (currentTool === 'move') transform.setMode('translate');
             else if (currentTool === 'rotate') transform.setMode('rotate');
             else if (currentTool === 'scale') transform.setMode('scale');
             
-            if (currentTool !== 'select') transform.attach(selectedObject);
+            if (currentTool !== 'select') transform.attach(selected);
             else transform.detach();
         }
     };
 });
 
-/* ==========================================================================
-   ФИЗИКА (CANNON-ES)
-   ========================================================================== */
-const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
-const groundBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
-groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
-world.addBody(groundBody);
+// ==========================================
+// 7. ПРИВЯЗКА ИНПУТОВ СВОЙСТВ
+// ==========================================
+// Позиция
+document.getElementById('pX').oninput = e => { if (selected) selected.position.x = parseFloat(e.target.value) || 0; };
+document.getElementById('pY').oninput = e => { if (selected) selected.position.y = parseFloat(e.target.value) || 0; };
+document.getElementById('pZ').oninput = e => { if (selected) selected.position.z = parseFloat(e.target.value) || 0; };
 
-const bodies = [];
-let physEnabled = false;
+// Вращение (перевод из градусов в радианы)
+document.getElementById('rX').oninput = e => { if (selected) selected.rotation.x = (parseFloat(e.target.value) || 0) * Math.PI / 180; };
+document.getElementById('rY').oninput = e => { if (selected) selected.rotation.y = (parseFloat(e.target.value) || 0) * Math.PI / 180; };
+document.getElementById('rZ').oninput = e => { if (selected) selected.rotation.z = (parseFloat(e.target.value) || 0) * Math.PI / 180; };
 
-document.getElementById('physEnabled').onchange = e => {
-    physEnabled = e.target.checked;
-    if (physEnabled) {
-        objects.forEach(o => {
-            const box = new THREE.Box3().setFromObject(o);
-            const size = new THREE.Vector3();
-            box.getSize(size);
-            const shape = new CANNON.Box(new CANNON.Vec3(size.x/2, size.y/2, size.z/2));
-            const body = new CANNON.Body({ mass: 1, shape: shape });
-            body.position.set(o.position.x, o.position.y, o.position.z);
-            world.addBody(body);
-            bodies.push({ mesh: o, body: body });
-        });
-        toast('Физика включена');
-    } else {
-        bodies.forEach(b => world.removeBody(b.body));
-        bodies.length = 0;
-        toast('Физика выключена');
-    }
-};
+// Масштаб
+document.getElementById('pS').oninput = e => { if (selected) selected.scale.setScalar(parseFloat(e.target.value) || 1); };
 
-document.getElementById('objPhysKick').onclick = () => {
-    if (!selectedObject) return;
-    const b = bodies.find(x => x.mesh === selectedObject);
-    if (b) {
-        b.body.velocity.set(0, 8, 0);
-        b.body.angularVelocity.set(Math.random()*4-2, Math.random()*4-2, Math.random()*4-2);
-    } else {
-        toast('Включите физику!');
-    }
-};
+// Материал
+document.getElementById('pColor').oninput = e => { if (selected) selected.material.color.set(e.target.value); };
+document.getElementById('pMetal').oninput = e => { if (selected) selected.material.metalness = parseFloat(e.target.value); };
+document.getElementById('pRough').oninput = e => { if (selected) selected.material.roughness = parseFloat(e.target.value); };
 
-/* ==========================================================================
-   UI ПРИВЯЗКА (ИНПУТЫ)
-   ========================================================================== */
-function bindPos(id, axis) {
-    document.getElementById(id).oninput = e => {
-        if (selectedObject) selectedObject.position[axis] = parseFloat(e.target.value) || 0;
-    };
-}
-bindPos('pLocX', 'x'); bindPos('pLocY', 'y'); bindPos('pLocZ', 'z');
-
-function bindRot(id, axis) {
-    document.getElementById(id).oninput = e => {
-        if (selectedObject) selectedObject.rotation[axis] = (parseFloat(e.target.value) || 0) * Math.PI / 180;
-    };
-}
-bindRot('pRotX', 'x'); bindRot('pRotY', 'y'); bindRot('pRotZ', 'z');
-
-function bindScl(id, axis) {
-    document.getElementById(id).oninput = e => {
-        if (selectedObject) selectedObject.scale[axis] = parseFloat(e.target.value) || 1;
-    };
-}
-bindScl('pSclX', 'x'); bindScl('pSclY', 'y'); bindScl('pSclZ', 'z');
-
-document.getElementById('pName').oninput = e => {
-    if (selectedObject) {
-        selectedObject.userData.name = e.target.value;
-        refreshOutliner();
-        document.getElementById('selText').textContent = e.target.value;
-    }
-};
-
-document.getElementById('pColor').oninput = e => {
-    if (selectedObject && selectedObject.material) selectedObject.material.color.set(e.target.value);
-};
-
-document.getElementById('pMetal').oninput = e => {
-    if (selectedObject && selectedObject.material) {
-        selectedObject.material.metalness = parseFloat(e.target.value);
-        document.getElementById('pMetalV').textContent = e.target.value;
-    }
-};
-
-document.getElementById('pRough').oninput = e => {
-    if (selectedObject && selectedObject.material) {
-        selectedObject.material.roughness = parseFloat(e.target.value);
-        document.getElementById('pRoughV').textContent = e.target.value;
-    }
-};
-
-document.getElementById('pSegments').oninput = e => {
-    if (!selectedObject || selectedObject.userData.type === 'imported') return;
+// Полигоны (изменение количества)
+document.getElementById('pSeg').oninput = e => {
+    if (!selected || selected.userData.type === 'imported') return;
     const seg = parseInt(e.target.value);
-    document.getElementById('pSegmentsV').textContent = seg;
-    const newGeo = makeGeometry(selectedObject.userData.type, seg);
-    selectedObject.geometry.dispose();
-    selectedObject.geometry = newGeo;
+    selected.geometry.dispose();
+    selected.geometry = createGeom(selected.userData.type, seg);
+    selected.userData.segments = seg;
     
+    // Обновляем счетчик полигонов
     let tris = 0;
-    if (newGeo.index) tris = newGeo.index.count / 3;
-    else if (newGeo.attributes.position) tris = newGeo.attributes.position.count / 3;
-    document.getElementById('pPolyCount').textContent = Math.round(tris);
+    if (selected.geometry.index) tris = selected.geometry.index.count / 3;
+    else if (selected.geometry.attributes.position) tris = selected.geometry.attributes.position.count / 3;
+    document.getElementById('pPolyCount').innerText = Math.round(tris);
 };
 
-/* ==========================================================================
-   ФОН
-   ========================================================================== */
-document.getElementById('bgColorPicker').oninput = e => {
+// ==========================================
+// 8. ФОН СЦЕНЫ (Scene Tab)
+// ==========================================
+document.getElementById('bgColor').oninput = e => {
     scene.background = new THREE.Color(e.target.value);
 };
 
@@ -2159,216 +945,359 @@ document.getElementById('bgFile').onchange = e => {
         const tex = new THREE.TextureLoader().load(ev.target.result);
         tex.colorSpace = THREE.SRGBColorSpace;
         scene.background = tex;
-        toast('Фон загружен!');
     };
     reader.readAsDataURL(file);
 };
 
 document.getElementById('btnClearBG').onclick = () => {
-    scene.background = new THREE.Color(document.getElementById('bgColorPicker').value);
-    toast('Фон сброшен');
+    scene.background = new THREE.Color(document.getElementById('bgColor').value);
 };
 
-/* ==========================================================================
-   ИМПОРТ МОДЕЛЕЙ
-   ========================================================================== */
-document.querySelectorAll('[data-act="import-model"]').forEach(el => {
+// ==========================================
+// 9. ФИЗИКА (CANNON-ES)
+// ==========================================
+const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
+world.addBody(new CANNON.Body({ mass: 0, shape: new CANNON.Plane(), quaternion: new CANNON.Quaternion().setFromEuler(-Math.PI / 2, 0, 0) }));
+
+const bodies = [];
+let isPhys = false;
+
+document.getElementById('physEnabled').onchange = e => {
+    isPhys = e.target.checked;
+    if (isPhys) {
+        // Создаем физические тела для всех объектов
+        objects.forEach(o => {
+            const box = new THREE.Box3().setFromObject(o);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            const body = new CANNON.Body({ 
+                mass: 1, 
+                shape: new CANNON.Box(new CANNON.Vec3(size.x / 2, size.y / 2, size.z / 2)) 
+            });
+            body.position.copy(o.position);
+            world.addBody(body);
+            bodies.push({ mesh: o, body: body });
+        });
+    } else {
+        // Удаляем физические тела
+        bodies.forEach(b => world.removeBody(b.body));
+        bodies.length = 0;
+    }
+};
+
+document.getElementById('btnKick').onclick = () => {
+    if (!selected) return;
+    const b = bodies.find(x => x.mesh === selected);
+    if (b) {
+        b.body.velocity.set(0, 8, 0);
+        b.body.angularVelocity.set(Math.random() * 4 - 2, Math.random() * 4 - 2, Math.random() * 4 - 2);
+    }
+};
+
+// ==========================================
+// 10. ИМПОРТ МОДЕЛЕЙ
+// ==========================================
+document.querySelectorAll('[data-act="import"]').forEach(el => {
     el.onclick = () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.glb,.gltf';
         input.onchange = e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const loader = new GLTFLoader();
-            const url = URL.createObjectURL(file);
+            const f = e.target.files[0];
+            if (!f) return;
             
-            loader.load(url, gltf => {
+            new GLTFLoader().load(URL.createObjectURL(f), gltf => {
                 const root = gltf.scene;
-                const box = new THREE.Box3().setFromObject(root);
-                const size = box.getSize(new THREE.Vector3());
-                const scale = 2 / Math.max(size.x, size.y, size.z);
-                root.scale.setScalar(scale);
-                root.position.y = 1;
-                
-                root.traverse(c => {
-                    if (c.isMesh) {
-                        c.castShadow = true;
-                        c.receiveShadow = true;
+                root.traverse(c => { 
+                    if (c.isMesh) { 
+                        c.castShadow = true; 
                         if (!c.material || c.material.type === 'MeshBasicMaterial') {
-                            c.material = new THREE.MeshStandardMaterial({ 
-                                color: 0xcccccc, 
-                                map: c.material?.map || null,
-                                side: THREE.DoubleSide 
-                            });
+                            c.material = new THREE.MeshStandardMaterial({ color: 0xcccccc, map: c.material?.map, side: THREE.DoubleSide }); 
                         }
                     }
                 });
-
-                counters['imported'] = (counters['imported'] || 0) + 1;
-                root.userData = { type: 'imported', name: `Model.${counters['imported']}` };
                 
-                scene.add(root);
-                objects.push(root);
-                selectObject(root);
-                toast('Модель загружена');
+                counters['imported'] = (counters['imported'] || 0) + 1;
+                root.userData = { type: 'imported', name: 'Model.' + counters['imported'] };
+                
+                scene.add(root); 
+                objects.push(root); 
+                selectObj(root); 
+                updateOutliner();
             });
         };
         input.click();
     };
 });
 
-/* ==========================================================================
-   RAYCAST (ВЫДЕЛЕНИЕ КЛИКОМ)
-   ========================================================================== */
-const raycaster = new THREE.Raycaster();
+// ==========================================
+// 11. КЛИК ПО СЦЕНЕ (ВЫДЕЛЕНИЕ)
+// ==========================================
+const ray = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 renderer.domElement.addEventListener('mousedown', e => {
     if (e.button !== 0) return;
     mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-    const hits = raycaster.intersectObjects(objects, true);
+    ray.setFromCamera(mouse, camera);
     
-    if (hits.length > 0) {
-        let hit = hits[0].object;
-        while (hit.parent && !objects.includes(hit)) hit = hit.parent;
-        selectObject(hit);
+    const hits = ray.intersectObjects(objects, true);
+    if (hits.length > 0) { 
+        let obj = hits[0].object; 
+        while (obj.parent && !objects.includes(obj)) obj = obj.parent; 
+        selectObj(obj); 
     } else {
-        selectObject(null);
+        selectObj(null);
     }
 });
 
-/* ==========================================================================
-   МЕНЮ И ТАБЫ
-   ========================================================================== */
-document.querySelectorAll('.menu-btn').forEach(btn => {
-    btn.onclick = e => {
-        if (e.target.closest('.menu-item')) return;
-        const was = btn.classList.contains('open');
-        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open'));
-        if (!was) btn.classList.add('open');
-        e.stopPropagation();
-    };
+// ==========================================
+// 12. МЕНЮ, ВКЛАДКИ И МОДАЛКА
+// ==========================================
+document.querySelectorAll('.menu-btn').forEach(b => b.onclick = e => {
+    if (e.target.closest('.menu-item')) return;
+    const was = b.classList.contains('open');
+    document.querySelectorAll('.menu-btn').forEach(x => x.classList.remove('open'));
+    if (!was) b.classList.add('open'); 
+    e.stopPropagation();
 });
-document.addEventListener('click', () => {
+
+document.addEventListener('click', () => document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open')));
+
+document.querySelectorAll('.menu-item').forEach(i => i.onclick = e => {
+    e.stopPropagation(); 
+    const act = i.dataset.act;
+    if (act && act.startsWith('add:')) addObj(act.split(':')[1]);
+    if (act === 'new') { 
+        objects.forEach(o => scene.remove(o)); 
+        objects.length = 0; 
+        addObj('cube'); 
+        selectObj(null); 
+    }
     document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open'));
 });
-document.querySelectorAll('.menu-item').forEach(item => {
-    item.onclick = e => {
-        e.stopPropagation();
-        const act = item.dataset.act;
-        if (act && act.startsWith('add:')) addObject(act.split(':')[1]);
-        if (act === 'new') { 
-            objects.slice().forEach(o => scene.remove(o)); 
-            objects.length = 0; 
-            addObject('cube'); 
-            selectObject(null);
-        }
-        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('open'));
-    };
+
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+    t.classList.add('active'); 
+    document.querySelector(`[data-tab-content="${t.dataset.tab}"]`).classList.add('active');
 });
 
-document.querySelectorAll('.tab-btn').forEach(tab => {
-    tab.onclick = () => {
-        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        tab.classList.add('active');
-        document.querySelector(`[data-tab-content="${tab.dataset.tab}"]`).classList.add('active');
-    };
+document.querySelectorAll('.add-item').forEach(i => i.onclick = () => { 
+    addObj(i.dataset.add); 
+    document.getElementById('addModal').classList.remove('open'); 
 });
 
-document.querySelectorAll('.add-item').forEach(item => {
-    item.onclick = () => {
-        addObject(item.dataset.add);
-        document.getElementById('addModal').classList.remove('open');
-    };
-});
-
-document.getElementById('addModal').onclick = (e) => {
-    if (e.target.id === 'addModal') e.target.classList.remove('open');
+document.getElementById('addModal').onclick = e => { 
+    if (e.target.id === 'addModal') e.target.classList.remove('open'); 
 };
 
-/* ==========================================================================
-   ТАЙМЛАЙН
-   ========================================================================== */
+// Дублирование и Удаление
+document.querySelectorAll('[data-act="dup"]').forEach(el => el.onclick = () => {
+    if (!selected) return;
+    const clone = selected.clone();
+    clone.position.x += 2;
+    clone.userData = { ...selected.userData, name: selected.userData.name + '_copy' };
+    scene.add(clone);
+    objects.push(clone);
+    selectObj(clone);
+    updateOutliner();
+});
+
+document.querySelectorAll('[data-act="del"]').forEach(el => el.onclick = () => {
+    if (!selected) return;
+    scene.remove(selected);
+    objects.splice(objects.indexOf(selected), 1);
+    selectObj(null);
+    updateOutliner();
+});
+    // ==========================================
+// 13. СОХРАНЕНИЕ И ЗАГРУЗКА (JSON)
+// ==========================================
+document.querySelectorAll('[data-act="save"]').forEach(el => el.onclick = () => {
+    const data = {
+        objects: objects.map(o => ({
+            type: o.userData.type,
+            name: o.userData.name,
+            pos: o.position.toArray(),
+            rot: [o.rotation.x, o.rotation.y, o.rotation.z],
+            scl: o.scale.toArray(),
+            color: o.material ? o.material.color.getHex() : 0xcccccc,
+            segments: o.userData.segments || 32
+        }))
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'blender_scene.json';
+    a.click();
+});
+
+document.querySelectorAll('[data-act="open"]').forEach(el => el.onclick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = ev => {
+            const data = JSON.parse(ev.target.result);
+            
+            // Очищаем сцену
+            objects.forEach(o => scene.remove(o));
+            objects.length = 0;
+            Object.keys(counters).forEach(k => delete counters[k]);
+            
+            // Загружаем новые
+            data.objects.forEach(od => {
+                const mesh = new THREE.Mesh(
+                    createGeom(od.type, od.segments),
+                    new THREE.MeshStandardMaterial({ color: od.color })
+                );
+                mesh.position.fromArray(od.pos);
+                mesh.rotation.set(od.rot[0], od.rot[1], od.rot[2]);
+                mesh.scale.fromArray(od.scl);
+                mesh.userData = { type: od.type, name: od.name, segments: od.segments };
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                
+                scene.add(mesh);
+                objects.push(mesh);
+            });
+            
+            selectObj(null);
+            updateOutliner();
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+});
+
+// ==========================================
+// 14. АНИМАЦИЯ И ТАЙМЛАЙН
+// ==========================================
 let frame = 1;
 let playing = false;
+let animData = []; // Здесь будут храниться ключевые кадры
 
 document.getElementById('btnPlay').onclick = function() {
     playing = !playing;
-    this.classList.toggle('playing', playing);
-    this.textContent = playing ? '⏸' : '▶';
+    this.innerText = playing ? '⏸' : '▶';
 };
 
-document.getElementById('fFrame').oninput = e => {
-    frame = parseInt(e.target.value) || 1;
-    document.getElementById('curFrame').textContent = frame;
-    document.getElementById('stFrame').textContent = frame;
+// Клик по таймлайну для смены кадра
+document.getElementById('timeline').addEventListener('mousedown', e => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    frame = Math.floor(x / 10) + 1;
+    document.getElementById('curFrame').innerText = frame;
     document.getElementById('playhead').style.left = ((frame - 1) * 10) + 'px';
-};
+});
 
-/* ==========================================================================
-   РЕНДЕР-ЛУП
-   ========================================================================== */
-let lastTime = performance.now();
-let fpsTimer = 0, framesCount = 0;
+// ==========================================
+// 15. ГОРЯЧИЕ КЛАВИШИ (БАЗОВЫЕ)
+// ==========================================
+window.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return; // Игнорируем, если пишем в поле
+    
+    // Создание по Ctrl+G (или Shift+A)
+    if ((e.ctrlKey && e.key === 'g') || (e.shiftKey && e.key === 'A')) {
+        e.preventDefault();
+        document.getElementById('addModal').classList.add('open');
+    }
+    
+    // Удаление по X
+    if (e.key === 'x' || e.key === 'X' || e.key === 'Delete') {
+        if (selected) {
+            scene.remove(selected);
+            objects.splice(objects.indexOf(selected), 1);
+            selectObj(null);
+            updateOutliner();
+        }
+    }
+    
+    // Дублирование по Shift+D
+    if (e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        if (selected) {
+            const clone = selected.clone();
+            clone.position.x += 2;
+            clone.userData = { ...selected.userData, name: selected.userData.name + '_copy' };
+            scene.add(clone);
+            objects.push(clone);
+            selectObj(clone);
+            updateOutliner();
+        }
+    }
+    
+    // Пробел (плей/пауза)
+    if (e.key === ' ') {
+        e.preventDefault();
+        document.getElementById('btnPlay').click();
+    }
+});
+
+// ==========================================
+// 16. РЕНДЕР-ЛУП (ГЛАВНЫЙ ЦИКЛ)
+// ==========================================
+let lastT = performance.now();
+let fCount = 0, fpsT = 0;
 
 function loop() {
     requestAnimationFrame(loop);
     const now = performance.now();
-    const dt = (now - lastTime) / 1000;
-    lastTime = now;
+    const dt = (now - lastT) / 1000;
+    lastT = now;
 
-    // Физика
-    if (physEnabled && bodies.length > 0) {
-        world.step(1/60, dt, 3);
+    // Обновление физики
+    if (isPhys && bodies.length > 0) {
+        world.step(1 / 60, dt, 3);
         bodies.forEach(b => {
             b.mesh.position.copy(b.body.position);
             b.mesh.quaternion.copy(b.body.quaternion);
         });
     }
 
-    // Таймлайн
+    // Проигрывание анимации
     if (playing) {
         frame++;
         if (frame > 120) frame = 1;
-        document.getElementById('fFrame').value = frame;
-        document.getElementById('curFrame').textContent = frame;
+        document.getElementById('curFrame').innerText = frame;
         document.getElementById('playhead').style.left = ((frame - 1) * 10) + 'px';
     }
 
-    // Ресайз
-    if (renderer.domElement.width !== viewportEl.clientWidth || renderer.domElement.height !== viewportEl.clientHeight) {
-        renderer.setSize(viewportEl.clientWidth, viewportEl.clientHeight, false);
-        camera.aspect = viewportEl.clientWidth / viewportEl.clientHeight;
+    // Ресайз окна
+    if (renderer.domElement.width !== viewEl.clientWidth || renderer.domElement.height !== viewEl.clientHeight) {
+        renderer.setSize(viewEl.clientWidth, viewEl.clientHeight, false);
+        camera.aspect = viewEl.clientWidth / viewEl.clientHeight;
         camera.updateProjectionMatrix();
     }
 
     renderer.render(scene, camera);
 
     // FPS
-    framesCount++;
-    fpsTimer += dt;
-    if (fpsTimer > 0.5) {
-        document.getElementById('stFps').textContent = Math.round(framesCount / fpsTimer);
-        framesCount = 0;
-        fpsTimer = 0;
+    fCount++;
+    fpsT += dt;
+    if (fpsT > 0.5) {
+        document.getElementById('stFps').innerText = Math.round(fCount / fpsT);
+        fCount = 0;
+        fpsT = 0;
     }
 }
 
-/* ==========================================================================
-   СТАРТ
-   ========================================================================== */
+// ==========================================
+// 17. ЗАПУСК
+// ==========================================
 orbit.update();
-redrawGizmo();
-addObject('cube');
-addObject('plane');
-selectObject(null);
+addObj('cube');
+addObj('plane');
+selectObj(null);
 loop();
-
-console.log('Blender Web Ultimate успешно запущен!');
 </script>
 </body>
 </html>
